@@ -1,0 +1,4 @@
+pyjwt==1.7.*
+pyyaml==5.*
+six==1.14.*
+pytz

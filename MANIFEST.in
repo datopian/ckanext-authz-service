@@ -1,0 +1,4 @@
+include README.rst
+include LICENSE
+include requirements.txt
+recursive-include ckanext/jwt_authz_api *.html *.json *.js *.less *.css *.mo
