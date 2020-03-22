@@ -8,8 +8,10 @@ PIP_COMPILE := pip-compile
 ISORT := isort
 FLAKE8 := flake8
 NOSETESTS := nosetests
-SED := $(shell which gsed sed | head -n1)
 PASTER := paster
+
+# Find GNU sed in path (on OS X gsed should be preferred)
+SED := $(shell which gsed sed | head -n1)
 
 TEST_INI_PATH := ./test.ini
 CKAN_PATH := ../ckan

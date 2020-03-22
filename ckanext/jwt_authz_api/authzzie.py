@@ -9,8 +9,9 @@ system is granted permission X, and if so grant them permission Y in a
 different system.
 """
 
+from typing import Any, Dict, List, Set, Union
+
 from six import iteritems
-from typing import Any, Dict, Set, List, Union
 
 GrantCheckSpec = Union[str, Dict[str, Any]]
 

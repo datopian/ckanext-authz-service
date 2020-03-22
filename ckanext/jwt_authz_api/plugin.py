@@ -1,7 +1,7 @@
-import pkg_resources
 from functools import partial
 
 import ckan.plugins as plugins
+import pkg_resources
 import yaml
 
 from ckanext.jwt_authz_api import actions, util
@@ -30,4 +30,3 @@ def init_authzzie():
         permissions_map = yaml.safe_load(f)
 
     return Authzzie(permissions_map, ckan_auth_wrapper)
-

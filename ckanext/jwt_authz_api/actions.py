@@ -3,13 +3,13 @@
 import random
 import string
 from datetime import datetime, timedelta
+from typing import Dict, List, Optional
 
 import jwt
 import pytz
 from ckan.plugins import toolkit
 from six import string_types
 from six.moves import range
-from typing import Dict, List, Optional
 
 from . import util
 from .authzzie import Scope
@@ -70,6 +70,7 @@ def verify(_, data_dict, **__):
                 pass
 
     return result
+
 
 @toolkit.side_effect_free
 def public_key(*_, **__):
