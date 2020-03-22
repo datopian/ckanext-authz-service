@@ -106,8 +106,7 @@ Configuration settings
 
 ### Permission Mapping
 
-#### `ckanext.jwt_authz_api.permissions_map_file`
-String - File path 
+#### `ckanext.jwt_authz_api.permissions_map_file` (File Path String)
 
 Path to an **Authzzie** permissions mapping YAML file. This file configures 
 `authzzie`, which is the permissions mapping library at the core of this 
@@ -125,55 +124,47 @@ bundled with the extension.
 `jwt_private_key_file`. You probably also want to set `jwt_public_key_file`. 
 All other configuration options are optional. 
  
-#### `ckanext.jwt_authz_api.jwt_private_key`
-String 
+#### `ckanext.jwt_authz_api.jwt_private_key` (String)
 
 Private key or secret key for JWT signing / encryption. This should contain
 the key as a string. If both this value and `jwt_private_key_file` are set, 
 this one will take precedence.
 
-#### `ckanext.jwt_authz_api.jwt_private_key_file`
-String - File path
+#### `ckanext.jwt_authz_api.jwt_private_key_file` (File Path String)
 
 Path to the private key file. This is typically used with asymmetric signing /
 encryption algorithms. If both this value and `jwt_private_key` are set, 
 this value will be ignored. 
 
-#### `ckanext.jwt_authz_api.jwt_algorithm`
-String
+#### `ckanext.jwt_authz_api.jwt_algorithm` (String)
 
 Set the JWT signing / encryption algorithm. Defaults to `RS256` if not provided. 
 Possible values:
 
 * TBD
 
-#### `ckanext.jwt_authz_api.jwt_public_key_file`
-String - File path
+#### `ckanext.jwt_authz_api.jwt_public_key_file` (File path String)
 
 File path of the JWT public key file if an asymmetric signing / encryption
 algorithm has been used. 
 
 If not set, the `public_key` and `verify` API commands will not work. 
 
-#### `ckanext.jwt_authz_api.jwt_issuer`
-String
+#### `ckanext.jwt_authz_api.jwt_issuer` (String)
 
 Value of the JWT `iss` claim; Defaults to the current site URL if not set. 
 
-#### `ckanext.jwt_authz_api.jwt_audience`
-String
+#### `ckanext.jwt_authz_api.jwt_audience` (String)
 
 Value of the JWT `aud` claim; If not set, tokens will not include the `aud`
 claim. 
 
-#### `ckanext.jwt_authz_api.jwt_include_user_email`
-Boolean
+#### `ckanext.jwt_authz_api.jwt_include_user_email` (Boolean)
 
 Whether to include the user's email address in JWT tokens as the `email` claim.
 Defaults to `False`.
 
-#### `ckanext.jwt_authz_api.jwt_include_token_id`
-Boolean
+#### `ckanext.jwt_authz_api.jwt_include_token_id` (Boolean)
 
 Whether to include a unique ID as the JWT `jti` claim. Useful if consumers
 want to ensure a token has not been replayed. 
@@ -198,6 +189,23 @@ do:
     python setup.py develop
     pip install -r dev-requirements.txt
 
+
+### Generating an RSA keypair for RS* signing & encryption
+
+If you want to use the RS* signing / encryption algorithms, here is how to quickly
+generate an RSA keypair for local testing / development purposes:
+
+
+    # Generate an RSA private key in PEM encoded format
+    ssh-keygen -t rsa -b 4096 -m PEM -f jwt-rs256.key
+
+    # Extract the public key to a PEM file
+    openssl rsa -in jwt-rs256.key -pubout -outform PEM -out jwt-rs256.key.pub
+
+Do not enter any passphrase when generating the private key.
+
+Your keys will be saved at `jwt-rs256.pem` (private key) and `jwt-rs256.key.pub` (public key).
+You can now set the paths to these files in your config INI file (see above).
 
 Tests
 -----
