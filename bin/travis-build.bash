@@ -1,6 +1,8 @@
 #!/bin/bash
 set -e
 
+PROJECT=ckanext-jwt-authz-api
+
 echo "This is travis-build.bash..."
 
 echo "Installing the packages that CKAN requires..."
@@ -32,7 +34,7 @@ cd ckan
 paster db init -c test-core.ini
 cd -
 
-echo "Installing ckanext-versions and its requirements..."
+echo "Installing $PROJECT and its requirements..."
 python setup.py develop
 pip install -r dev-requirements.txt
 
