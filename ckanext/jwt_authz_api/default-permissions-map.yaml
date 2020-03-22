@@ -45,7 +45,6 @@ entity_scopes:
 
   res:
     entity_actions:
-      create: resource_create
       update: resource_update
       patch: resource_update
       delete: resource_delete
@@ -54,12 +53,10 @@ entity_scopes:
     subscopes:
       metadata:
         entity_actions:
-          create: resource_create
           update: resource_update
           read: resource_show
 
       data:
         entity_actions:
-          create: resource_create
           update: resource_update
           read: resource_show

@@ -116,6 +116,72 @@ having it pre-configured.
 }
 ```
 
+Authorization Scopes
+--------------------
+"Scopes" in the context of `jwt-authz-api` represent permission to perform one
+or more actions on one or more entities.
+
+A scope is represented as a string of between 1 and 4 colon separated parts, of
+one of the following structures:
+
+    <entity_type>[:entity_id[:action]]
+
+or:
+
+    <entity_type>[:entity_id[:subscope[:action]]]
+
+That is, a 3-part scope represents an entity type, an entity ID and an action;
+While a 4-part scope represets an entity type, an entity ID, a subscope and an
+action.
+
+`entity_type` is the only required part, and represents the type of entity on
+which actions can be performed.
+
+`entity_id` is optional, and can be used to limit the scope of actions to a
+specific entity (rather than all entities of the same type).
+
+`action` is optional, and can be used to limit the scope to a specific action
+(such as 'read' or 'delete'). Omitting typically means "any action".
+
+`subscope` is optional and can further limit actions to a "sub-entity", for
+example a dataset's metadata or an organization's users.
+
+Each optional part can be replaced with a `*` if a following part is to be
+specified, or simply omitted if no following parts are specified as well.
+
+To specify "all actions" in a scope that has a subscope, the `*` representing
+"all actions" must not be omitted, to ensure that the scoep string has 4 parts.
+
+### Examples:
+
+* `org:*:read` - denotes allowing the "read" action on all "org" type entities.
+
+* `org:foobar:*` - denotes allowing all actions on the 'foobar' org.
+`org:foobar` means the exact same thing.
+
+* `ds:*:metadata:read` - denotes allowing reading the metadata of all dataset
+entities.
+
+* `ds:*:metadata:*` - denotes allowing all actions on the metadata of all
+dataset entities.
+
+### Default CKAN Entities and Actions:
+
+The following table lists CKAN entity types, subscopes and actions that are preconfigured:
+
+| CKAN Entity  | Entity type | Subscope   | Entity Actions                               | Global Actions   |
+|--------------|-------------|------------|----------------------------------------------|------------------|
+| Organization | `org`       |            | `read`, `update`, `delete`, `patch`, `purge` | `create`, `list` |
+| Organization | `org`       | `member`   | `create`, `delete`                           |                  |
+| Dataset      | `ds`        |            | `read`, `update`, `delete`, `patch`, `purge` | `create`         |
+| Dataset      | `ds`        | `data`     | `read`, `update`, `patch`                    |                  |
+| Dataset      | `ds`        | `metadata` | `read`, `update`, `patch`                    |                  |
+| Resource     | `res`       |            | `read`, `update`, `delete`, `patch`          |                  |
+| Resource     | `res`       | `data`     | `read`, `update`                             |                  |
+| Resource     | `res`       | `metadata` | `read`, `update`                             |                  |
+
+Configuration can be changed by replacing the permissions mapping file with a new one. 
+
 Configuration settings
 ----------------------
 
