@@ -60,7 +60,7 @@ def verify(_, data_dict, **__):
 
     try:
         decoded = jwt.decode(token, key, algorithms=jwt_algorithm)
-        result = {"verified": jwt.decode,
+        result = {"verified": True,
                   "payload": decoded}
     except jwt.PyJWTError as e:
         result = {"verified": False,
