@@ -12,7 +12,7 @@ from six import string_types
 from six.moves import range
 
 from . import util
-from .authzzie import Scope
+from .authzzie import Scope, UnknownEntityType
 
 DEFAULT_MAX_LIFETIME = 900
 
@@ -31,8 +31,11 @@ def authorize(authzzie, context, data_dict):
     lifetime = min(toolkit.asint(data_dict.get('lifetime', max_lifetime)), max_lifetime)
     expires = datetime.now(tz=pytz.utc) + timedelta(seconds=lifetime)
 
-    granted_permissions = filter(None, (_normalize_granted_permissions(s, authzzie.get_permissions(s))
-                                        for s in requested_scopes))
+    try:
+        granted_permissions = filter(None, (_normalize_granted_permissions(s, authzzie.get_permissions(s))
+                                            for s in requested_scopes))
+    except UnknownEntityType as e:
+        raise toolkit.ValidationError(str(e))
 
     user = context.get('auth_user_obj')
     return {"user_id": user.name,
