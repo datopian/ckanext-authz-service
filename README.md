@@ -163,7 +163,8 @@ Value of the JWT `iss` claim; Defaults to the current site URL if not set.
 #### `ckanext.jwt_authz_api.jwt_audience`
 String
 
-Value of the JWT `aud` claim; Defaults to the `jwt_issuer` value if not set. 
+Value of the JWT `aud` claim; If not set, tokens will not include the `aud`
+claim. 
 
 #### `ckanext.jwt_authz_api.jwt_include_user_email`
 Boolean

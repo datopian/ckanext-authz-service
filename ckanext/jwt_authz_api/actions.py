@@ -96,14 +96,17 @@ def _create_token(user, scopes, lifetime):
         raise ValueError("JWT secret key is not configured")
 
     issuer = util.get_config('jwt_issuer', toolkit.config.get('ckan.site_url'))
-    audience = util.get_config('jwt_audience', issuer)
+
     payload = {"exp": datetime.now(tz=pytz.utc) + timedelta(seconds=lifetime),
                "nbf": datetime.now(tz=pytz.utc),
                "sub": user.name,
-               "aud": audience,
                "iss": issuer,
                "name": user.fullname,  # The user's name  # TODO: implement
                "scopes": ' '.join(str(s) for s in scopes)}
+
+    audience = util.get_config('jwt_audience')
+    if audience:
+        payload['aud'] = audience
 
     if util.get_config_bool('jwt_include_user_email', False):
         payload['email'] = user.email
