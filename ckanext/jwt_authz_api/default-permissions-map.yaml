@@ -2,49 +2,64 @@
 
 entity_scopes:
   org:
-    entity_grant_checks:
+    entity_actions:
       read: organization_show
       update: organization_update
       delete: organization_delete
       patch: organization_patch
       purge: organization_purge
-      member:create: organization_member_create
-      member:delete: organization_member_delete
 
-    global_grant_checks:
+    global_actions:
       create: organization_create
-      liat:  organization_list
+      list:  organization_list
 
-  dataset:
-    entity_grant_checks:
+    subscopes:
+      member:
+        entity_actions:
+          create: organization_member_create
+          delete: organization_member_delete
+
+  ds:
+    entity_actions:
       update: package_update
       patch: package_update
-      data:update: package_update
-      data:patch: package_update
-      metadata:update: package_update
-      metadata:patch: package_update
-
       delete: package_delete
       purge: dataset_purge
       read: package_show
-      data:read: package_show
-      metadata:read: package_show
 
-    global_grant_checks:
+    global_actions:
       create: package_create
-      data:create: package_create
-      metadata:create: package_create
 
-  resource:
-    entity_grant_checks:
+    subscopes:
+      data:
+        entity_actions:
+          update: package_update
+          patch: package_update
+          read: package_show
+
+      metadata:
+        entity_actions:
+          update: package_update
+          patch: package_update
+          read: package_show
+
+  res:
+    entity_actions:
       create: resource_create
-      data:create: resource_create
-      metadata:create: resource_create
       update: resource_update
       patch: resource_update
-      data:update: resource_update
-      metadata:update: resource_update
       delete: resource_delete
       read: resource_show
-      data:read: resource_show
-      metadata:read: resource_show
+
+    subscopes:
+      metadata:
+        entity_actions:
+          create: resource_create
+          update: resource_update
+          read: resource_show
+
+      data:
+        entity_actions:
+          create: resource_create
+          update: resource_update
+          read: resource_show

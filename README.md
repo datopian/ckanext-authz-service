@@ -60,11 +60,26 @@ specific objects.
 
 #### Parameters:
 
-TBD
+* `scopes` (list of strings, required) - list of requested permission scopes. 
+See [scopes](#Scopes) below for details.
+    
+* `lifetime` (int, optional) - requested token lifetime in seconds. Note that 
+if this exceeds the maximal lifetime configured for the server, the server's 
+maximal lifetime will be used instead. 
 
 #### Response:
 
-TBD
+A successful response will include a JWT token, as well as the information 
+encoded into the token in accessible format:
+
+* `token` - the encoded / signed / encrypted JWT token
+* `user_id` - the authorized user name
+* `expires_at` - token expiration time in ISO-8601 format
+* `requested_scopes` - list of permission scopes requested
+* `granted_scopes` - list of permission scopes granted
+
+`granted_scopes` may be different from `requested_scopes` based on the server's
+decision. 
 
 ### `verify`
 Verify a JWT token and show all it's claims
@@ -149,6 +164,11 @@ File path of the JWT public key file if an asymmetric signing / encryption
 algorithm has been used. 
 
 If not set, the `public_key` and `verify` API commands will not work. 
+
+#### `ckanext.jwt_authz_api.jwt_max_lifetime` (Integer)
+
+Maximal JWT token lifetime in seconds. Defaults to 900 (15 minutes) if not 
+set. Users can request tokens with shorter lifetime than this value.
 
 #### `ckanext.jwt_authz_api.jwt_issuer` (String)
 

@@ -3,7 +3,7 @@
 import random
 import string
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Set
 
 import jwt
 import pytz
@@ -13,6 +13,8 @@ from six.moves import range
 
 from . import util
 from .authzzie import Scope
+
+DEFAULT_MAX_LIFETIME = 900
 
 
 def authorize(authzzie, context, data_dict):
@@ -24,17 +26,20 @@ def authorize(authzzie, context, data_dict):
     if isinstance(scopes, string_types):
         scopes = scopes.split(' ')
     requested_scopes = [Scope.from_string(s) for s in scopes]
-    granted_permissions = {str(s): list(authzzie.get_permissions(s))
-                           for s in requested_scopes}
 
-    lifetime = 900  # TODO: should default to config + be dynamic
+    max_lifetime = util.get_config_int('jwt_max_lifetime', DEFAULT_MAX_LIFETIME)
+    lifetime = min(toolkit.asint(data_dict.get('lifetime', max_lifetime)), max_lifetime)
+    expires = datetime.now(tz=pytz.utc) + timedelta(seconds=lifetime)
+
+    granted_permissions = filter(None, (_normalize_granted_permissions(s, authzzie.get_permissions(s))
+                                        for s in requested_scopes))
+
     user = context.get('auth_user_obj')
-    print(user)
     return {"user_id": user.name,
-            "token": _create_token(user, granted_permissions, lifetime),
-            "expires_at": datetime.now().isoformat(),
-            "requested_scopes": scopes,
-            "granted": granted_permissions}
+            "token": _create_token(user, granted_permissions, expires),
+            "expires_at": expires.isoformat(),
+            "requested_scopes": [str(s) for s in requested_scopes],
+            "granted_scopes": granted_permissions}
 
 
 @toolkit.side_effect_free
@@ -85,8 +90,8 @@ def public_key(*_, **__):
     raise toolkit.ObjectNotFound("Public key has not been configured")
 
 
-def _create_token(user, scopes, lifetime):
-    # type: (Dict, List, int) -> str
+def _create_token(user, scopes, expires):
+    # type: (Dict, List, datetime) -> str
     """Create a JWT token
     """
     jwt_algorithm = util.get_config('jwt_algorithm', 'RS256')
@@ -97,7 +102,7 @@ def _create_token(user, scopes, lifetime):
 
     issuer = util.get_config('jwt_issuer', toolkit.config.get('ckan.site_url'))
 
-    payload = {"exp": datetime.now(tz=pytz.utc) + timedelta(seconds=lifetime),
+    payload = {"exp": expires,
                "nbf": datetime.now(tz=pytz.utc),
                "sub": user.name,
                "iss": issuer,
@@ -147,3 +152,13 @@ def _generate_jti(length=8):
     """Generate a unique token ID
     """
     return b''.join(random.choice(string.printable) for _ in range(length))
+
+
+def _normalize_granted_permissions(scope, granted_permissions):
+    # type: (Scope, Set[str]) -> Optional[str]
+    """Convert a scope object and a set of granted permissions to a string
+    """
+    if len(granted_permissions) == 0:
+        return None
+    scope.actions = ','.join(granted_permissions)
+    return str(scope)

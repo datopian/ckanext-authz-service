@@ -2,13 +2,12 @@
 
 This is written to be a generic "glue" between systems that have an existing
 authorization system and other scopes / grants based authorization paradigms
-such as OAuth and JWT.
+such as OAuth.
 
 You can use Authzzie to use an existing system to check if a user in that
 system is granted permission X, and if so grant them permission Y in a
 different system.
 """
-
 from typing import Any, Dict, List, Set, Union
 
 from six import iteritems
@@ -30,9 +29,13 @@ class Scope:
     the interface is maintained.
 
     By default, a scope is represented as a string of between 1 and 4 colon
-    separated parts, of the following structure:
+    separated parts, of one of the following structures:
 
-        <entity_type>[:entity_id[:action[:subscope]]]
+        <entity_type>[:entity_id[:action]]
+
+    or:
+
+        <entity_type>[:entity_id[:subscope[:action]]]
 
       `entity_type` is the only required part, and represents the type of
       entity on which actions can be performed.
@@ -59,7 +62,10 @@ class Scope:
         `org:foobar:*` - denotes allowing all actions on the 'foobar' org.
         `org:foobar` means the exact same thing.
 
-        `file:*:read:meta` - denotes allowing reading the metadata of all
+        `file:*:meta:read` - denotes allowing reading the metadata of all
+        file entities.
+
+        `file:*:meta:*` - denotes allowing all actions on the metadata of all
         file entities.
     """
 
@@ -81,11 +87,21 @@ class Scope:
         """Convert scope to a string
         """
         parts = [self.entity_type]
-        for p in (self.subscope, self.action, self.entity_id):
-            if p:
+
+        if self.subscope:
+            extra_parts = (self.action, self.subscope, self.entity_id)
+        else:
+            extra_parts = (self.action, self.entity_id)
+
+        for p in extra_parts:
+            if p and p != '*':
                 parts.insert(1, p)
             elif len(parts) > 1:
                 parts.insert(1, '*')
+
+        if self.subscope and not self.action:
+            parts.append('*')
+
         return ':'.join(parts)
 
     @classmethod
@@ -98,10 +114,14 @@ class Scope:
         scope = cls(parts[0])
         if len(parts) > 1 and parts[1] != '*':
             scope.entity_id = parts[1]
-        if len(parts) > 2 and parts[2] != '*':
+        if len(parts) == 3 and parts[2] != '*':
             scope.action = parts[2]
-        if len(parts) > 3 and parts[3] != '*':
-            scope.subscope = parts[3]
+        if len(parts) == 4:
+            if parts[2] != '*':
+                scope.subscope = parts[2]
+            if parts[3] != '*':
+                scope.action = parts[3]
+
         return scope
 
 
@@ -120,21 +140,38 @@ class Authzzie:
         if scope.entity_type not in self.permission_map.get('entity_scopes', {}):
             raise UnknownEntityType("Unknown entity type: {}".format(scope.entity_type))
 
+        entity_scope = self._get_entity_scope(scope)
+        permission_scope = 'entity_actions' if scope.entity_id else 'global_actions'
+
+        if permission_scope not in entity_scope:
+            return set()
+
         check_cache = {}
         granted = set()
-        permission_scope = 'entity_grant_checks' if scope.entity_id else 'global_grant_checks'
-        if permission_scope not in self.permission_map['entity_scopes'][scope.entity_type]:
-            return granted
-
-        checks = self.permission_map['entity_scopes'][scope.entity_type][permission_scope]
+        denied_actions = False
+        checks = entity_scope[permission_scope]
         for permission, check in iteritems(checks):
             if self._check_permission(check, check_cache, entity_id=scope.entity_id):
                 granted.add(permission)
+            else:
+                denied_actions = True
 
         if scope.action:
             granted = granted.intersection([scope.action])
+        elif not denied_actions:
+            granted = set('*')  # All actions were granted
 
         return granted
+
+    def _get_entity_scope(self, scope):
+        # type: (Scope) -> Dict[str, Dict[str, GrantCheckSpec]]
+        if scope.subscope:
+            if scope.subscope not in self.permission_map['entity_scopes'][scope.entity_type].get('subscopes', {}):
+                raise UnknownEntityType("Unkown subscope: {}:{}".format(scope.entity_type, scope.subscope))
+            entity_scope = self.permission_map['entity_scopes'][scope.entity_type]['subscopes'][scope.subscope]
+        else:
+            entity_scope = self.permission_map['entity_scopes'][scope.entity_type]
+        return entity_scope
 
     def _check_permission(self, check, check_cache, entity_id=None):
         # type: (Union[GrantCheckSpec, List[GrantCheckSpec]], Dict[GrantCheckSpec, bool]) -> bool
