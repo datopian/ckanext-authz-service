@@ -28,6 +28,39 @@ class Scope:
     specific format to represent scope strings, that is different from the
     Authzzie format, you can replace this class with anything else as long as
     the interface is maintained.
+
+    By default, a scope is represented as a string of between 1 and 4 colon
+    separated parts, of the following structure:
+
+        <entity_type>[:entity_id[:action[:subscope]]]
+
+      `entity_type` is the only required part, and represents the type of
+      entity on which actions can be performed.
+
+      `entity_id` is optional, and can be used to limit the scope of actions
+      to a specific entity (rather than all entities of the same type).
+
+      `action` is optional, and can be used to limit the scope to a specific
+      action (such as 'read' or 'delete'). Omitting typically means "any
+      action".
+
+      `subscope` is optional and can further limit actions to a "sub-entity",
+      for example a dataset's metadata or an organization's users.
+
+    Each optional part can be replaced with a '*' if a following part is to
+    be specified, or simply omitted if no following parts are specified as
+    well.
+
+    Examples:
+
+        `org:*:read` - denotes allowing the "read" action on all "org" type
+        entities.
+
+        `org:foobar:*` - denotes allowing all actions on the 'foobar' org.
+        `org:foobar` means the exact same thing.
+
+        `file:*:read:meta` - denotes allowing reading the metadata of all
+        file entities.
     """
 
     entity_type = None
@@ -35,35 +68,40 @@ class Scope:
     entity_id = None
     action = None
 
-    def __init__(self, entity_type, entity_id, subscope=None, action=None):
+    def __init__(self, entity_type, entity_id=None, action=None, subscope=None):
         self.entity_type = entity_type
         self.entity_id = entity_id
-        self.subscope = subscope
         self.action = action
+        self.subscope = subscope
 
     def __repr__(self):
-        return '<Scope {}{}>'.format(str(self),
-                                     ':{}'.format(self.action) if self.action else '')
+        return '<Scope {}>'.format(str(self))
 
     def __str__(self):
-        return '{}:{}{}'.format(
-            self.entity_type,
-            self.entity_id if self.entity_id else '*',
-            ':{}'.format(self.subscope) if self.subscope else ''
-        )
+        """Convert scope to a string
+        """
+        parts = [self.entity_type]
+        for p in (self.subscope, self.action, self.entity_id):
+            if p:
+                parts.insert(1, p)
+            elif len(parts) > 1:
+                parts.insert(1, '*')
+        return ':'.join(parts)
 
     @classmethod
     def from_string(cls, scope_str):
         """Create a scope object from string
         """
         parts = scope_str.split(':')
-        if len(parts) < 2:
-            raise ValueError("Scope string should have at least 2 parts")
-        scope = cls(parts[0], None if parts[1] == '*' else parts[1])
-        if len(parts) > 2:
-            scope.subscope = parts[2]
-        if len(parts) > 3:
-            scope.action = parts[3]
+        if len(parts) < 1:
+            raise ValueError("Scope string should have at least 1 part")
+        scope = cls(parts[0])
+        if len(parts) > 1 and parts[1] != '*':
+            scope.entity_id = parts[1]
+        if len(parts) > 2 and parts[2] != '*':
+            scope.action = parts[2]
+        if len(parts) > 3 and parts[3] != '*':
+            scope.subscope = parts[3]
         return scope
 
 
