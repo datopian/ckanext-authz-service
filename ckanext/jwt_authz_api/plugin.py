@@ -5,7 +5,7 @@ import pkg_resources
 import yaml
 
 from ckanext.jwt_authz_api import actions, util
-from ckanext.jwt_authz_api.auth_wrapper import ckan_auth_wrapper
+from ckanext.jwt_authz_api.authz_helpers import ckan_auth_wrapper
 from ckanext.jwt_authz_api.authzzie import Authzzie
 
 

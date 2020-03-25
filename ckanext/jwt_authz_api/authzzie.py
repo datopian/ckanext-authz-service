@@ -8,7 +8,8 @@ You can use Authzzie to use an existing system to check if a user in that
 system is granted permission X, and if so grant them permission Y in a
 different system.
 """
-from typing import Any, Dict, List, Set, Union
+import importlib
+from typing import Any, Callable, Dict, List, Optional, Set, Union
 
 from six import iteritems
 
@@ -130,7 +131,9 @@ class Authzzie:
     """
 
     def __init__(self, permission_map, authz_wrapper):
-        self.permission_map = permission_map
+        self.permission_map = {}
+        self.id_parsers = {}
+        self._load_permission_map(permission_map)
         self.authz_wrapper = authz_wrapper
 
     def get_permissions(self, scope):
@@ -151,7 +154,7 @@ class Authzzie:
         denied_actions = False
         checks = entity_scope[permission_scope]
         for permission, check in iteritems(checks):
-            if self._check_permission(check, check_cache, entity_id=scope.entity_id):
+            if self._check_permission(scope, check, check_cache):
                 granted.add(permission)
             else:
                 denied_actions = True
@@ -163,6 +166,17 @@ class Authzzie:
 
         return granted
 
+    def _load_permission_map(self, permission_map):
+        # type: (Dict[str, Dict]) -> None
+        """Load the permissions map from dict, populating configuration
+        """
+        self.permission_map = permission_map
+
+        # Load ID parsers
+        for e_type, spec in iteritems(permission_map['entity_scopes']):
+            if 'entity_id_parser' in spec:
+                self.id_parsers[e_type] = _get_callable(spec['entity_id_parser'])
+
     def _get_entity_scope(self, scope):
         # type: (Scope) -> Dict[str, Dict[str, GrantCheckSpec]]
         if scope.subscope:
@@ -173,20 +187,48 @@ class Authzzie:
             entity_scope = self.permission_map['entity_scopes'][scope.entity_type]
         return entity_scope
 
-    def _check_permission(self, check, check_cache, entity_id=None):
-        # type: (Union[GrantCheckSpec, List[GrantCheckSpec]], Dict[GrantCheckSpec, bool]) -> bool
+    def _check_permission(self, scope, check, check_cache):
+        # type: (Scope, Union[GrantCheckSpec, List[GrantCheckSpec]], Dict[GrantCheckSpec, bool]) -> bool
         """Check if a permission is granted based on spec and result of wrapper callable
         """
         if check in check_cache:
             return check_cache[check]
 
         if isinstance(check, list):
-            return all(self._check_permission(c, check_cache, entity_id) for c in check)
+            return all(self._check_permission(scope, c, check_cache) for c in check)
 
         if isinstance(check, dict):
             raise NotImplementedError("Complex check specs are not implemented yet")
 
-        # TODO: the entity ID arg name may need to be different based on check spec
-        result = self.authz_wrapper(check, id=entity_id)
+        if scope.entity_id and scope.entity_type in self.id_parsers:
+            kwargs = self.id_parsers[scope.entity_type](scope.entity_id)
+        else:
+            # TODO: the entity ID arg name may need to be different based on check spec
+            kwargs = {"id": scope.entity_id}
+
+        result = self.authz_wrapper(check, **kwargs)
         check_cache[check] = result
         return result
+
+
+def _get_callable(callable_str, base_package=None):
+    # type: (str, Optional[str]) -> Callable
+    """Get a callable function / class constructor from a string of the form
+    `package.subpackage.module:callable`
+
+    >>> _get_callable('os.path:basename')  # doctest: +ELLIPSIS
+    <function basename at 0x...>
+
+    >>> _get_callable('basename', 'os.path')  # doctest: +ELLIPSIS
+    <function basename at 0x...>
+    """
+    if ':' in callable_str:
+        module_name, callable_name = callable_str.split(':', 1)
+        module = importlib.import_module(module_name, base_package)
+    elif base_package:
+        module = importlib.import_module(base_package)
+        callable_name = callable_str
+    else:
+        raise ValueError("Expecting base_package to be set if only class name is provided")
+
+    return getattr(module, callable_name)  # type: ignore

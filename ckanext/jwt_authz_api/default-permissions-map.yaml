@@ -20,6 +20,7 @@ entity_scopes:
           delete: organization_member_delete
 
   ds:
+    entity_id_parser: ckanext.jwt_authz_api.authz_helpers:dataset_id_parser
     entity_actions:
       update: package_update
       patch: package_update
@@ -35,7 +36,7 @@ entity_scopes:
         entity_actions:
           update: package_update
           patch: package_update
-          read: package_show
+          read: ackage_show
 
       metadata:
         entity_actions:
@@ -44,6 +45,7 @@ entity_scopes:
           read: package_show
 
   res:
+    entity_id_parser: ckanext.jwt_authz_api.authz_helpers:resource_id_parser
     entity_actions:
       update: resource_update
       patch: resource_update
