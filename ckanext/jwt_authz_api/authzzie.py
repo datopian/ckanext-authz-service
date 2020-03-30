@@ -8,19 +8,30 @@ You can use Authzzie to use an existing system to check if a user in that
 system is granted permission X, and if so grant them permission Y in a
 different system.
 """
-import importlib
-from typing import Any, Callable, Dict, List, Optional, Set, Union
+from collections import Iterable, defaultdict
+from typing import Any, Dict
+from typing import Iterable as IterableType
+from typing import List, Set, Union
 
-from six import iteritems
+from six import string_types
+from typing_extensions import Protocol
 
 GrantCheckSpec = Union[str, Dict[str, Any]]
+
+
+class AuthCheckCallable(Protocol):
+    """Type declaration for authentication check callable
+    """
+    def __call__(self, **kwargs):
+        # type: (**str) -> Set[str]
+        raise NotImplementedError('You should not be instantiating this')
 
 
 class UnknownEntityType(ValueError):
     pass
 
 
-class Scope:
+class Scope(object):
     """Scope object
 
     This is an abstraction of a scope representation. Its main purpose is to
@@ -72,12 +83,12 @@ class Scope:
 
     entity_type = None
     subscope = None
-    entity_id = None
+    entity_ref = None
     action = None
 
     def __init__(self, entity_type, entity_id=None, action=None, subscope=None):
         self.entity_type = entity_type
-        self.entity_id = entity_id
+        self.entity_ref = entity_id
         self.action = action
         self.subscope = subscope
 
@@ -90,9 +101,9 @@ class Scope:
         parts = [self.entity_type]
 
         if self.subscope:
-            extra_parts = (self.action, self.subscope, self.entity_id)
+            extra_parts = (self.action, self.subscope, self.entity_ref)
         else:
-            extra_parts = (self.action, self.entity_id)
+            extra_parts = (self.action, self.entity_ref)
 
         for p in extra_parts:
             if p and p != '*':
@@ -114,7 +125,7 @@ class Scope:
             raise ValueError("Scope string should have at least 1 part")
         scope = cls(parts[0])
         if len(parts) > 1 and parts[1] != '*':
-            scope.entity_id = parts[1]
+            scope.entity_ref = parts[1]
         if len(parts) == 3 and parts[2] != '*':
             scope.action = parts[2]
         if len(parts) == 4:
@@ -126,109 +137,91 @@ class Scope:
         return scope
 
 
-class Authzzie:
-    """Authzzie Authorization Permissions Mapper
+class Authzzie(object):
+    """Authzzie authorization permission mapping class
     """
 
-    def __init__(self, permission_map, authz_wrapper):
-        self.permission_map = {}
-        self.id_parsers = {}
-        self._load_permission_map(permission_map)
-        self.authz_wrapper = authz_wrapper
+    def __init__(self):
+        self._auth_checks = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
+        self._id_parsers = {}
+
+    def id_parser(self, entity_type):
+        """Decorator for registering an ID parser function
+        """
+        id_parsers = self._id_parsers
+
+        def decorator(f):
+            id_parsers[entity_type] = f
+            return f
+
+        return decorator
+
+    def auth_check(self, entity_type, actions=None, subscopes=None, append=False):
+        """Decorator for registering an authorization check function
+        """
+        actions = _to_iterable(actions)
+        subscopes = _to_iterable(subscopes)
+        auth_checks = self._auth_checks
+
+        def decorator(f):
+            for s in subscopes:
+                for a in actions:
+                    if append:
+                        auth_checks[entity_type][s][a].append(f)
+                    else:
+                        auth_checks[entity_type][s][a] = [f]
+            return f
+
+        return decorator
 
     def get_permissions(self, scope):
         # type: (Scope) -> Set[str]
         """Get list of granted permissions for an entity / ID
         """
-        if scope.entity_type not in self.permission_map.get('entity_scopes', {}):
+        auth_checks = self._get_auth_checks(scope)
+        check_results = [self._check_permission(scope, check) for check in auth_checks]
+        if scope.action:
+            return {scope.action}.intersection(*check_results)
+        elif len(check_results) == 0:
+            return set()
+        else:
+            return check_results[0].intersection(*check_results[1:])
+
+    def _get_auth_checks(self, scope):
+        # type: (Scope) -> List[AuthCheckCallable]
+        """Get the authorization checks matching the requested scope
+        """
+        if scope.entity_type not in self._auth_checks:
             raise UnknownEntityType("Unknown entity type: {}".format(scope.entity_type))
 
-        entity_scope = self._get_entity_scope(scope)
-        permission_scope = 'entity_actions' if scope.entity_id else 'global_actions'
-
-        if permission_scope not in entity_scope:
-            return set()
-
-        check_cache = {}
-        granted = set()
-        denied_actions = False
-        checks = entity_scope[permission_scope]
-        for permission, check in iteritems(checks):
-            if self._check_permission(scope, check, check_cache):
-                granted.add(permission)
-            else:
-                denied_actions = True
-
-        if scope.action:
-            granted = granted.intersection([scope.action])
-        elif not denied_actions:
-            granted = set('*')  # All actions were granted
-
-        return granted
-
-    def _load_permission_map(self, permission_map):
-        # type: (Dict[str, Dict]) -> None
-        """Load the permissions map from dict, populating configuration
-        """
-        self.permission_map = permission_map
-
-        # Load ID parsers
-        for e_type, spec in iteritems(permission_map['entity_scopes']):
-            if 'entity_id_parser' in spec:
-                self.id_parsers[e_type] = _get_callable(spec['entity_id_parser'])
-
-    def _get_entity_scope(self, scope):
-        # type: (Scope) -> Dict[str, Dict[str, GrantCheckSpec]]
-        if scope.subscope:
-            if scope.subscope not in self.permission_map['entity_scopes'][scope.entity_type].get('subscopes', {}):
-                raise UnknownEntityType("Unkown subscope: {}:{}".format(scope.entity_type, scope.subscope))
-            entity_scope = self.permission_map['entity_scopes'][scope.entity_type]['subscopes'][scope.subscope]
+        e_checks = self._auth_checks[scope.entity_type]
+        if scope.subscope and scope.subscope in e_checks:
+            e_checks = e_checks[scope.subscope]
         else:
-            entity_scope = self.permission_map['entity_scopes'][scope.entity_type]
-        return entity_scope
+            e_checks = e_checks[None]
 
-    def _check_permission(self, scope, check, check_cache):
-        # type: (Scope, Union[GrantCheckSpec, List[GrantCheckSpec]], Dict[GrantCheckSpec, bool]) -> bool
-        """Check if a permission is granted based on spec and result of wrapper callable
+        if scope.action and scope.action in e_checks:
+            return e_checks[scope.action]
+
+        return e_checks[None]
+
+    def _check_permission(self, scope, check):
+        # type: (Scope, AuthCheckCallable) -> Set[str]
+        """Call permission check function for scope and return result
         """
-        if check in check_cache:
-            return check_cache[check]
-
-        if isinstance(check, list):
-            return all(self._check_permission(scope, c, check_cache) for c in check)
-
-        if isinstance(check, dict):
-            raise NotImplementedError("Complex check specs are not implemented yet")
-
-        if scope.entity_id and scope.entity_type in self.id_parsers:
-            kwargs = self.id_parsers[scope.entity_type](scope.entity_id)
+        if scope.entity_ref and scope.entity_type in self._id_parsers:
+            kwargs = self._id_parsers[scope.entity_type](scope.entity_ref)
         else:
             # TODO: the entity ID arg name may need to be different based on check spec
-            kwargs = {"id": scope.entity_id}
+            kwargs = {"id": scope.entity_ref}
 
-        result = self.authz_wrapper(check, **kwargs)
-        check_cache[check] = result
-        return result
+        return check(**kwargs)
 
 
-def _get_callable(callable_str, base_package=None):
-    # type: (str, Optional[str]) -> Callable
-    """Get a callable function / class constructor from a string of the form
-    `package.subpackage.module:callable`
-
-    >>> _get_callable('os.path:basename')  # doctest: +ELLIPSIS
-    <function basename at 0x...>
-
-    >>> _get_callable('basename', 'os.path')  # doctest: +ELLIPSIS
-    <function basename at 0x...>
+def _to_iterable(val):
+    # type: (Any) -> IterableType
+    """Get something we can iterate over from an unknown type
     """
-    if ':' in callable_str:
-        module_name, callable_name = callable_str.split(':', 1)
-        module = importlib.import_module(module_name, base_package)
-    elif base_package:
-        module = importlib.import_module(base_package)
-        callable_name = callable_str
-    else:
-        raise ValueError("Expecting base_package to be set if only class name is provided")
-
-    return getattr(module, callable_name)  # type: ignore
+    if isinstance(val, Iterable) and not isinstance(val, string_types):
+        return val
+    return (val,)

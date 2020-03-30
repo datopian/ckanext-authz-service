@@ -12,12 +12,13 @@ from six import string_types
 from six.moves import range
 
 from . import util
+from .authz_binding import authzzie
 from .authzzie import Scope, UnknownEntityType
 
 DEFAULT_MAX_LIFETIME = 900
 
 
-def authorize(authzzie, context, data_dict):
+def authorize(context, data_dict):
     """Request an authorization token for a list of scopes
 
     TODO: allow requesting expiration time
