@@ -29,7 +29,7 @@ prepare-config:
 test: prepare-config dev-requirements.txt
 	$(PIP) install -r dev-requirements.txt
 	$(ISORT) -rc -df -c $(PACKAGE_DIR)
-	$(FLAKE8) $(PACKAGE_DIR)
+	$(FLAKE8) --statistics $(PACKAGE_DIR)
 	$(PASTER) --plugin=ckan db init -c $(TEST_INI_PATH)
 	$(NOSETESTS) --ckan \
 	      --with-pylons=$(TEST_INI_PATH) \
