@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-PROJECT=ckanext-jwt-authz-api
+PROJECT=ckanext-authz-service
 
 echo "This is travis-build.bash..."
 

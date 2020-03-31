@@ -4,4 +4,3 @@ isort==4.3.*
 flake8==3.7.*
 coveralls==1.8.*
 parameterized==0.7.*
-typing==3.7.*

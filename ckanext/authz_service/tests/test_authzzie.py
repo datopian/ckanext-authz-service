@@ -4,21 +4,21 @@
 from parameterized import parameterized
 from six import iteritems
 
-from ckanext.jwt_authz_api import authzzie
+from ckanext.authz_service import authzzie
 
 
 class TestAuthzzieScope(object):
 
     @parameterized([
-        ('org:myorg:*', {'entity_type': 'org', 'entity_id': 'myorg', 'action': None, 'subscope': None}),
-        ('org:myorg', {'entity_type': 'org', 'entity_id': 'myorg', 'action': None, 'subscope': None}),
-        ('ds', {'entity_type': 'ds', 'entity_id': None, 'action': None, 'subscope': None}),
-        ('ds:*', {'entity_type': 'ds', 'entity_id': None, 'action': None, 'subscope': None}),
-        ('ds:*:read', {'entity_type': 'ds', 'entity_id': None, 'action': 'read', 'subscope': None}),
-        ('ds:foobaz:meta:read', {'entity_type': 'ds', 'entity_id': 'foobaz', 'action': 'read', 'subscope': 'meta'}),
-        ('ds:foobaz:*:read', {'entity_type': 'ds', 'entity_id': 'foobaz', 'action': 'read', 'subscope': None}),
-        ('ds:foobaz:meta:*', {'entity_type': 'ds', 'entity_id': 'foobaz', 'action': None, 'subscope': 'meta'}),
-        ('ds:foobaz:delete', {'entity_type': 'ds', 'entity_id': 'foobaz', 'action': 'delete', 'subscope': None}),
+        ('org:myorg:*', {'entity_type': 'org', 'entity_ref': 'myorg', 'action': None, 'subscope': None}),
+        ('org:myorg', {'entity_type': 'org', 'entity_ref': 'myorg', 'action': None, 'subscope': None}),
+        ('ds', {'entity_type': 'ds', 'entity_ref': None, 'action': None, 'subscope': None}),
+        ('ds:*', {'entity_type': 'ds', 'entity_ref': None, 'action': None, 'subscope': None}),
+        ('ds:*:read', {'entity_type': 'ds', 'entity_ref': None, 'action': 'read', 'subscope': None}),
+        ('ds:foobaz:meta:read', {'entity_type': 'ds', 'entity_ref': 'foobaz', 'action': 'read', 'subscope': 'meta'}),
+        ('ds:foobaz:*:read', {'entity_type': 'ds', 'entity_ref': 'foobaz', 'action': 'read', 'subscope': None}),
+        ('ds:foobaz:meta:*', {'entity_type': 'ds', 'entity_ref': 'foobaz', 'action': None, 'subscope': 'meta'}),
+        ('ds:foobaz:delete', {'entity_type': 'ds', 'entity_ref': 'foobaz', 'action': 'delete', 'subscope': None}),
     ])
     def test_scope_parsing(self, scope_str, expected):
         """Test scope string parsing works as expected

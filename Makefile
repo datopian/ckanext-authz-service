@@ -1,6 +1,6 @@
 # Makefile for ckanext-versions
 
-PACKAGE_DIR := ckanext/jwt_authz_api
+PACKAGE_DIR := ckanext/authz_service
 
 SHELL := bash
 PIP := pip
