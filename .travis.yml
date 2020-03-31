@@ -30,8 +30,8 @@ after_success:
 
 jobs:
   allow_failures:
-    - python: 2.7
-      env: CKANVERSION=2.8
+    - python: 3.6
+    - env: CKANVERSION=master
 
 cache:
   directories:
