@@ -1,5 +1,8 @@
 ckanext-authz-service
 =====================
+[![Build Status](https://travis-ci.org/datopian/ckanext-authz-service.svg?branch=master)](https://travis-ci.org/datopian/ckanext-authz-service)
+[![Coverage Status](https://coveralls.io/repos/github/datopian/ckanext-authz-service/badge.svg?branch=master)](https://coveralls.io/github/datopian/ckanext-authz-service?branch=master)
+
 **JSON Web Tokens (JWT) Based Authorization API for CKAN**
 
 This extension uses CKAN's built-in authentication and authorization
@@ -181,7 +184,8 @@ The following table lists CKAN entity types, subscopes and actions that are prec
 | Resource     | `res`       | `data`     | `read`, `update`                             |                  |
 | Resource     | `res`       | `metadata` | `read`, `update`                             |                  |
 
-Configuration can be changed by replacing the permissions mapping file with a new one. 
+New entities, subscopes or actions can be added, and default configuration can 
+be overridden, by using the `@authzzie.auth_check` decorator.  
 
 Configuration settings
 ----------------------
