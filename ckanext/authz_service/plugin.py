@@ -1,9 +1,9 @@
 import ckan.plugins as plugins
 
-from ckanext.jwt_authz_api import actions
+from ckanext.authz_service import actions
 
 
-class JwtAuthzApiPlugin(plugins.SingletonPlugin):
+class AuthzServicePlugin(plugins.SingletonPlugin):
     plugins.implements(plugins.IActions)
 
     # IActions

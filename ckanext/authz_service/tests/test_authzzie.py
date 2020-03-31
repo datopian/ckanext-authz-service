@@ -4,7 +4,7 @@
 from parameterized import parameterized
 from six import iteritems
 
-from ckanext.jwt_authz_api import authzzie
+from ckanext.authz_service import authzzie
 
 
 class TestAuthzzieScope(object):

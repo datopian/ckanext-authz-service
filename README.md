@@ -1,4 +1,4 @@
-ckanext-jwt-authz-api
+ckanext-authz-service
 =====================
 **JSON Web Tokens (JWT) Based Authorization API for CKAN**
 
@@ -27,19 +27,19 @@ It may work, but has not been tested, with other CKAN versions.
 Installation
 ------------
 
-To install ckanext-jwt-authz-api:
+To install ckanext-authz-service:
 
 1. Activate your CKAN virtual environment, for example:
 ```
      . /usr/lib/ckan/default/bin/activate
 ```
 
-2. Install the ckanext-jwt-authz-api Python package into your virtual environment:
+2. Install the ckanext-authz-service Python package into your virtual environment:
 ```
-     pip install ckanext-jwt-authz-api
+     pip install ckanext-authz-service
 ```
 
-3. Add `jwt-authz-api` to the `ckan.plugins` setting in your CKAN
+3. Add `authz-service` to the `ckan.plugins` setting in your CKAN
    config file (by default the config file is located at
    `/etc/ckan/default/production.ini`).
 
@@ -118,7 +118,7 @@ having it pre-configured.
 
 Authorization Scopes
 --------------------
-"Scopes" in the context of `jwt-authz-api` represent permission to perform one
+"Scopes" in the context of `authz-service` represent permission to perform one
 or more actions on one or more entities.
 
 A scope is represented as a string of between 1 and 4 colon separated parts, of
@@ -187,7 +187,7 @@ Configuration settings
 
 ### Permission Mapping
 
-#### `ckanext.jwt_authz_api.permissions_map_file` (File Path String)
+#### `ckanext.authz_service.permissions_map_file` (File Path String)
 
 Path to an **Authzzie** permissions mapping YAML file. This file configures 
 `authzzie`, which is the permissions mapping library at the core of this 
@@ -205,52 +205,52 @@ bundled with the extension.
 `jwt_private_key_file`. You probably also want to set `jwt_public_key_file`. 
 All other configuration options are optional. 
  
-#### `ckanext.jwt_authz_api.jwt_private_key` (String)
+#### `ckanext.authz_service.jwt_private_key` (String)
 
 Private key or secret key for JWT signing / encryption. This should contain
 the key as a string. If both this value and `jwt_private_key_file` are set, 
 this one will take precedence.
 
-#### `ckanext.jwt_authz_api.jwt_private_key_file` (File Path String)
+#### `ckanext.authz_service.jwt_private_key_file` (File Path String)
 
 Path to the private key file. This is typically used with asymmetric signing /
 encryption algorithms. If both this value and `jwt_private_key` are set, 
 this value will be ignored. 
 
-#### `ckanext.jwt_authz_api.jwt_algorithm` (String)
+#### `ckanext.authz_service.jwt_algorithm` (String)
 
 Set the JWT signing / encryption algorithm. Defaults to `RS256` if not provided. 
 Possible values:
 
 * TBD
 
-#### `ckanext.jwt_authz_api.jwt_public_key_file` (File path String)
+#### `ckanext.authz_service.jwt_public_key_file` (File path String)
 
 File path of the JWT public key file if an asymmetric signing / encryption
 algorithm has been used. 
 
 If not set, the `public_key` and `verify` API commands will not work. 
 
-#### `ckanext.jwt_authz_api.jwt_max_lifetime` (Integer)
+#### `ckanext.authz_service.jwt_max_lifetime` (Integer)
 
 Maximal JWT token lifetime in seconds. Defaults to 900 (15 minutes) if not 
 set. Users can request tokens with shorter lifetime than this value.
 
-#### `ckanext.jwt_authz_api.jwt_issuer` (String)
+#### `ckanext.authz_service.jwt_issuer` (String)
 
 Value of the JWT `iss` claim; Defaults to the current site URL if not set. 
 
-#### `ckanext.jwt_authz_api.jwt_audience` (String)
+#### `ckanext.authz_service.jwt_audience` (String)
 
 Value of the JWT `aud` claim; If not set, tokens will not include the `aud`
 claim. 
 
-#### `ckanext.jwt_authz_api.jwt_include_user_email` (Boolean)
+#### `ckanext.authz_service.jwt_include_user_email` (Boolean)
 
 Whether to include the user's email address in JWT tokens as the `email` claim.
 Defaults to `False`.
 
-#### `ckanext.jwt_authz_api.jwt_include_token_id` (Boolean)
+#### `ckanext.authz_service.jwt_include_token_id` (Boolean)
 
 Whether to include a unique ID as the JWT `jti` claim. Useful if consumers
 want to ensure a token has not been replayed. 
@@ -267,11 +267,11 @@ More details TBD
 Developer installation
 ----------------------
 
-To install ckanext-jwt-authz-api for development, activate your CKAN virtualenv and
+To install ckanext-authz-service for development, activate your CKAN virtualenv and
 do:
 
-    git clone https://github.com/datopian/ckanext-jwt-authz-api.git
-    cd ckanext-jwt-authz-api
+    git clone https://github.com/datopian/ckanext-authz-service.git
+    cd ckanext-authz-service
     python setup.py develop
     pip install -r dev-requirements.txt
 
@@ -305,10 +305,10 @@ coverage installed in your virtualenv (``pip install coverage``) then run:
 
     make coverage
 
-Releasing a new version of ckanext-jwt-authz-api
+Releasing a new version of ckanext-authz-service
 ------------------------------------------------
 
-ckanext-jwt-authz-api should be available on PyPI as https://pypi.org/project/ckanext-jwt-authz-api.
+ckanext-authz-service should be available on PyPI as https://pypi.org/project/ckanext-authz-service.
 To publish a new version to PyPI follow these steps:
 
 1. Update the version number in the `setup.py` file.

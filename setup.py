@@ -10,7 +10,7 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
 setup(
-    name='''ckanext-jwt-authz-api''',
+    name='''ckanext-authz-service''',
 
     # Versions should comply with PEP440.  For a discussion on single-sourcing
     # the version across setup.py and the project code, see
@@ -22,7 +22,7 @@ setup(
     long_description_content_type='text/markdown',
 
     # The project's main homepage.
-    url='https://github.com/datopian/ckanext-jwt-authz-api',
+    url='https://github.com/datopian/ckanext-authz-service',
 
     # Author details
     author='''Shahar Evron''',
@@ -68,9 +68,7 @@ setup(
     # installed, specify them here.  If using Python 2.6 or less, then these
     # have to be included in MANIFEST.in as well.
     include_package_data=True,
-    package_data={
-        'ckanext.jwt_authz_api': 'default-permissions-map.yaml'
-    },
+    package_data={},
 
     # Although 'package_data' is the preferred approach, in some case you may
     # need to place data files outside of your packages.
@@ -83,7 +81,7 @@ setup(
     # pip to create the appropriate form of executable for the target platform.
     entry_points='''
         [ckan.plugins]
-        jwt_authz_api=ckanext.jwt_authz_api.plugin:JwtAuthzApiPlugin
+        authz_service=ckanext.authz_service.plugin:AuthzServicePlugin
 
         [babel.extractors]
         ckan = ckan.lib.extract:extract_ckan

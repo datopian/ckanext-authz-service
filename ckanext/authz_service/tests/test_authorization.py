@@ -4,8 +4,8 @@ from ckan import model
 from ckan.tests import factories
 from mock import patch
 
-from ckanext.jwt_authz_api.authz_binding import authzzie
-from ckanext.jwt_authz_api.authzzie import Scope
+from ckanext.authz_service.authz_binding import authzzie
+from ckanext.authz_service.authzzie import Scope
 
 from . import FunctionalTestBase
 
@@ -17,7 +17,7 @@ def user_context(user):
                 "user": user['name'],
                 "userobj": model.User.get(user['name'])}
 
-    with patch('ckanext.jwt_authz_api.authz_binding.common.get_user_context', mock_context):
+    with patch('ckanext.authz_service.authz_binding.common.get_user_context', mock_context):
         yield
 
 
