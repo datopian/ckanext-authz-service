@@ -5,8 +5,8 @@ sudo: required
 # psycopg2 that comes with CKAN<2.8:
 #   "Error: could not determine PostgreSQL version from '10.1'"
 # see https://github.com/travis-ci/travis-ci/issues/8897
-#dist: trusty
-#group: deprecated-2017Q4
+dist: trusty
+group: deprecated-2017Q4
 
 # matrix
 python:
