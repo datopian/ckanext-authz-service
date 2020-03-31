@@ -39,7 +39,7 @@ To install ckanext-jwt-authz-api:
      pip install ckanext-jwt-authz-api
 ```
 
-3. Add `jwt-authz-api` to the `ckan.plugins` setting in your CKAN
+3. Add `jwt_authz_api` to the `ckan.plugins` setting in your CKAN
    config file (by default the config file is located at
    `/etc/ckan/default/production.ini`).
 
