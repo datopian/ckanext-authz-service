@@ -1,5 +1,8 @@
 language: python
-sudo: required
+
+services:
+  - postgresql
+  - redis
 
 # use an older trusty image, because the newer images cause build errors with
 # psycopg2 that comes with CKAN<2.8:
@@ -8,21 +11,28 @@ sudo: required
 dist: trusty
 group: deprecated-2017Q4
 
-# matrix
 python:
   - 2.7
   - 3.6
+
 env:
   - CKANVERSION=master
   - CKANVERSION=2.8
 
-# tests
-services:
-  - postgresql
-  - redis-server
 install:
   - bash bin/travis-build.bash
   - pip install coveralls
+
 script: make test coverage CKAN_PATH=./ckan
+
 after_success:
   - coveralls
+
+jobs:
+  allow_failures:
+    - python: 2.7
+      env: CKANVERSION=2.8
+
+cache:
+  directories:
+    - $HOME/.cache/pip
