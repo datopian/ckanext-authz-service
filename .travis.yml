@@ -11,7 +11,7 @@ group: deprecated-2017Q4
 # matrix
 python:
   - 2.7
-  - 3.7
+  - 3.6
 env:
   - CKANVERSION=master
   - CKANVERSION=2.8
@@ -23,6 +23,6 @@ services:
 install:
   - bash bin/travis-build.bash
   - pip install coveralls
-script: make test coverage
+script: make test coverage CKAN_PATH=./ckan
 after_success:
   - coveralls
