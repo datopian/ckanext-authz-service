@@ -21,13 +21,14 @@ def user_context(user):
         yield
 
 
-class TestAuthorizationBinding(FunctionalTestBase):
+class TestDatasetAuthBinding(FunctionalTestBase):
     """Test cases for the default authorization binding defined in the extension
+    for datasets
     """
 
     def setup(self):
 
-        super(TestAuthorizationBinding, self).setup()
+        super(TestDatasetAuthBinding, self).setup()
 
         self.org_admin = factories.User()
         self.org_member = factories.User()
@@ -64,3 +65,35 @@ class TestAuthorizationBinding(FunctionalTestBase):
         with user_context(user):
             granted = authzzie.get_permissions(scope)
         assert granted == set()
+
+    def test_org_admin_can_update_all_datasets(self):
+        """Test that an org admin can update all datasets in the org
+        """
+        scope = Scope('ds', '{}/*'.format(self.org['name']), 'update')
+        with user_context(self.org_admin):
+            granted = authzzie.get_permissions(scope)
+        assert granted == {'update'}
+
+    def test_org_admin_can_patch_all_datasets(self):
+        """Test that an org admin can update all datasets in the org
+        """
+        scope = Scope('ds', '{}/*'.format(self.org['name']), 'create')
+        with user_context(self.org_admin):
+            granted = authzzie.get_permissions(scope)
+        assert granted == {'create'}
+
+    def test_org_member_global_dataset_actions(self):
+        """Test that an org member can list datasets
+        """
+        scope = Scope('ds', '{}/'.format(self.org['name']))
+        with user_context(self.org_member):
+            granted = authzzie.get_permissions(scope)
+        assert granted == {'list'}
+
+    def test_org_admin_global_dataset_actions(self):
+        """Test that an org admin can create and list datasets
+        """
+        scope = Scope('ds', '{}/'.format(self.org['name']))
+        with user_context(self.org_admin):
+            granted = authzzie.get_permissions(scope)
+        assert granted == {'create', 'list'}
