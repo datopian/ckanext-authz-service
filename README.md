@@ -8,13 +8,14 @@ clients. This is useful in situations where clients need to integrate with an
 external system or service which can consume JWT tokens and has to rely on
 CKAN for authentication and authorization.
 
-Using a customizable configuration file, this extension maps CKAN entities and
-permissions to scopes encoded into generated JWT tokens, so that tokens relay
-both the user's identity, and the permissions granted to them to act on
-different entities such as organizations and datasets.  Scopes can even relate
-to custom entities unknown to CKAN, as long as deciding the access level a user
-should have to these entities can be determined based on their permissions in
-CKAN.
+By designating "glue" authorization check functions using a simple decorator
+API, this extension maps CKAN entities and permissions to scopes encoded into
+generated JWT tokens. This allows tokens to relay both the user's identity and
+the permissions granted to them to act on different entities such as 
+organizations and datasets.  
+
+Other CKAN extensions can customize the authorization functions used to 
+determine a user's access level, or define custom entity types to support.
 
 Requirements
 ------------
@@ -150,7 +151,7 @@ Each optional part can be replaced with a `*` if a following part is to be
 specified, or simply omitted if no following parts are specified as well.
 
 To specify "all actions" in a scope that has a subscope, the `*` representing
-"all actions" must not be omitted, to ensure that the scoep string has 4 parts.
+"all actions" must not be omitted, to ensure that the scope string has 4 parts.
 
 ### Examples:
 
@@ -184,20 +185,6 @@ Configuration can be changed by replacing the permissions mapping file with a ne
 
 Configuration settings
 ----------------------
-
-### Permission Mapping
-
-#### `ckanext.authz_service.permissions_map_file` (File Path String)
-
-Path to an **Authzzie** permissions mapping YAML file. This file configures 
-`authzzie`, which is the permissions mapping library at the core of this 
-extension. 
-
-See [Permissions Mapping](#Permissions-Mapping) below for more details on the
-format of this file. 
-
-If none is provided, will default to the `default-permissions-map.yaml` file
-bundled with the extension.
 
 ### JWT settings
 
@@ -255,14 +242,6 @@ Defaults to `False`.
 Whether to include a unique ID as the JWT `jti` claim. Useful if consumers
 want to ensure a token has not been replayed. 
 Defaults to `False`.
-
-Permission Mapping
-------------------
-See the included `default-permissions-map.yaml` file for an example of how 
-default CKAN permissions are mapped. 
-
-More details TBD
-
 
 Developer installation
 ----------------------

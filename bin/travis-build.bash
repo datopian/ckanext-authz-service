@@ -72,9 +72,4 @@ pip install -r dev-requirements.txt
 
 python setup.py develop
 
-echo "Moving test.ini into a subdir... (because the core ini file is referenced as ../ckan/test-core.ini)"
-mkdir subdir
-mv test.ini subdir
-mv test-nose.ini subdir
-
 echo "travis-build.bash is done."
