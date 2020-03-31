@@ -1,6 +1,7 @@
 # Makefile for ckanext-versions
 
 PACKAGE_DIR := ckanext/authz_service
+PACKAGE_NAME := ckanext.authz_service
 
 SHELL := bash
 PIP := pip
@@ -41,7 +42,7 @@ coverage: prepare-config test
 	      --with-pylons=$(TEST_INI_PATH) \
           --nologcapture \
 		  --with-coverage \
-          --cover-package=ckanext.versions \
+          --cover-package=$(PACKAGE_NAME) \
           --cover-inclusive \
           --cover-erase \
           --cover-tests
