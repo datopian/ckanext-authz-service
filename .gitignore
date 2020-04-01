@@ -44,3 +44,6 @@ docs/_build/
 
 # Editors and IDEs
 /.idea
+
+# Make sentinel files
+.*.sentinel

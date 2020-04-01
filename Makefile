@@ -24,20 +24,28 @@ dev-requirements.txt: dev-requirements.in
 requirements.txt: requirements.in
 	$(PIP_COMPILE) --no-index requirements.in -o requirements.txt
 
-prepare-config:
+.$(TEST_INI_PATH).sentinel: $(TEST_INI_PATH) $(CKAN_PATH)/test-core.ini
 	$(SED) "s@use = config:.*@use = config:$(CKAN_PATH)/test-core.ini@" -i $(TEST_INI_PATH)
+	@touch $@
 
-test: prepare-config dev-requirements.txt
+.test-env.sentinel: .$(TEST_INI_PATH).sentinel dev-requirements.txt
 	$(PIP) install -r dev-requirements.txt
+	$(PASTER) --plugin=ckan db init -c $(TEST_INI_PATH)
+	@touch $@
+
+.tests-passed.sentinel: .test-env.sentinel $(shell find $(PACKAGE_DIR) -type f) .flake8 .isort.cfg
 	$(ISORT) -rc -df -c $(PACKAGE_DIR)
 	$(FLAKE8) --statistics $(PACKAGE_DIR)
-	$(PASTER) --plugin=ckan db init -c $(TEST_INI_PATH)
 	$(NOSETESTS) --ckan \
 	      --with-pylons=$(TEST_INI_PATH) \
           --nologcapture \
           --with-doctest
+	@touch $@
 
-coverage: prepare-config test
+test: .tests-passed.sentinel
+.PHONY: test
+
+.coverage: .tests-passed.sentinel $(shell find $(PACKAGE_DIR) -type f) .coveragerc
 	$(NOSETESTS) --ckan \
 	      --with-pylons=$(TEST_INI_PATH) \
           --nologcapture \
@@ -46,3 +54,6 @@ coverage: prepare-config test
           --cover-inclusive \
           --cover-erase \
           --cover-tests
+
+coverrage: .coverage
+.PHONY: coverage
