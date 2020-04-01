@@ -1,7 +1,7 @@
 from contextlib import contextmanager
 
 from ckan import model
-from ckan.tests import factories
+from ckan.tests import factories, helpers
 from mock import patch
 
 from ckanext.authz_service.authz_binding import authzzie
@@ -132,3 +132,83 @@ class TestResourceAuthBinding(FunctionalTestBase):
         with user_context(self.org_admin):
             granted = authzzie.get_permissions(scope)
         assert granted == {'update'}
+
+
+class TestOrganizationAuthBinding(FunctionalTestBase):
+    """Test cases for the default authorization binding defined in the extension
+    for resources
+    """
+
+    def setup(self):
+
+        super(TestOrganizationAuthBinding, self).setup()
+
+        self.org_admin = factories.User()
+        self.org_member = factories.User()
+        self.org = factories.Organization(
+            users=[
+                {'name': self.org_member['name'], 'capacity': 'member'},
+                {'name': self.org_admin['name'], 'capacity': 'admin'},
+            ]
+        )
+
+        self.other_org = factories.Organization()
+        self.sysadmin = factories.Sysadmin()
+
+    def test_org_member_can_read_org(self):
+        """Test that org member gets 'read' authorized for the entire org
+        """
+        scope = Scope('org', self.org['name'], 'read')
+        with user_context(self.org_member):
+            granted = authzzie.get_permissions(scope)
+        assert granted == {'read'}
+
+    def test_org_member_cannot_update_org(self):
+        """Test that org member gets 'read' authorized for the entire org
+        """
+        scope = Scope('org', self.org['name'], 'update')
+        with user_context(self.org_member):
+            granted = authzzie.get_permissions(scope)
+        assert granted == set()
+
+    def test_org_admin_can_update_org(self):
+        """Test that org member gets 'read' authorized for the entire org
+        """
+        scope = Scope('org', self.org['name'], 'update')
+        with user_context(self.org_admin):
+            granted = authzzie.get_permissions(scope)
+        assert granted == {'update'}
+
+    def test_org_admin_cannot_update_other_org(self):
+        """Test that org admin doesn't get permission over other org
+        """
+        scope = Scope('org', self.other_org['name'], 'update')
+        with user_context(self.org_admin):
+            granted = authzzie.get_permissions(scope)
+        assert granted == set()
+
+    def test_org_admin_cannot_create_new_orgs(self):
+        """Test that org admin doesn't get permission to create other organizations
+
+        This actually depends on a configuration option, so we'll check with / without
+        this option enabled
+        """
+        scope = Scope('org', actions=['create', 'list'])
+
+        with helpers.changed_config('ckan.auth.user_create_organizations', False):
+            with user_context(self.org_admin):
+                granted = authzzie.get_permissions(scope)
+            assert granted == {'list'}
+
+        with helpers.changed_config('ckan.auth.user_create_organizations', True):
+            with user_context(self.org_admin):
+                granted = authzzie.get_permissions(scope)
+            assert granted == {'list', 'create'}
+
+    def test_sysadmin_can_create_new_orgs(self):
+        """Test that sysadmins can create new organizations
+        """
+        scope = Scope('org', actions=['create', 'list'])
+        with user_context(self.sysadmin):
+            granted = authzzie.get_permissions(scope)
+        assert granted == {'create', 'list'}
