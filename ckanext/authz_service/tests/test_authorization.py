@@ -39,8 +39,6 @@ class TestDatasetAuthBinding(FunctionalTestBase):
             ]
         )
 
-        self.dataset = factories.Dataset()
-
     def test_org_member_can_read_all_datasets(self):
         """Test that org member gets 'read' authorized for the entire org
         """

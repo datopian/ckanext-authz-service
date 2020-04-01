@@ -11,12 +11,10 @@ different system.
 from collections import Iterable, defaultdict
 from typing import Any, Dict
 from typing import Iterable as IterableType
-from typing import List, Set, Union
+from typing import List, Optional, Set, Union
 
 from six import string_types
 from typing_extensions import Protocol
-
-GrantCheckSpec = Union[str, Dict[str, Any]]
 
 
 class AuthCheckCallable(Protocol):
@@ -43,11 +41,11 @@ class Scope(object):
     By default, a scope is represented as a string of between 1 and 4 colon
     separated parts, of one of the following structures:
 
-        <entity_type>[:entity_id[:action]]
+        <entity_type>[:entity_id[:actions]]
 
     or:
 
-        <entity_type>[:entity_id[:subscope[:action]]]
+        <entity_type>[:entity_id[:subscope[:actions]]]
 
       `entity_type` is the only required part, and represents the type of
       entity on which actions can be performed.
@@ -55,9 +53,9 @@ class Scope(object):
       `entity_id` is optional, and can be used to limit the scope of actions
       to a specific entity (rather than all entities of the same type).
 
-      `action` is optional, and can be used to limit the scope to a specific
-      action (such as 'read' or 'delete'). Omitting typically means "any
-      action".
+      `actions` is optional, and can be used to limit the scope to a specific
+      action (such as 'read' or 'delete') or actions. Omitting typically means
+      "any action". Multiple actions are specified as comma separated.
 
       `subscope` is optional and can further limit actions to a "sub-entity",
       for example a dataset's metadata or an organization's users.
@@ -77,6 +75,9 @@ class Scope(object):
         `file:*:meta:read` - denotes allowing reading the metadata of all
         file entities.
 
+        `file:*:meta:read,update` - denotes allowing reading and updating the
+        metadata of all file entities.
+
         `file:*:meta:*` - denotes allowing all actions on the metadata of all
         file entities.
     """
@@ -84,12 +85,13 @@ class Scope(object):
     entity_type = None
     subscope = None
     entity_ref = None
-    action = None
+    actions = None
 
-    def __init__(self, entity_type, entity_id=None, action=None, subscope=None):
+    def __init__(self, entity_type, entity_id=None, actions=None, subscope=None):
+        # type: (str, Optional[str], Union[None, str, Iterable], Optional[str]) -> None
         self.entity_type = entity_type
         self.entity_ref = entity_id
-        self.action = action
+        self.actions = set(to_iterable(actions)) if actions else None
         self.subscope = subscope
 
     def __repr__(self):
@@ -99,20 +101,22 @@ class Scope(object):
         """Convert scope to a string
         """
         parts = [self.entity_type]
+        entity_ref = self.entity_ref if self.entity_ref != '*' else None
+        subscobe = self.subscope if self.subscope != '*' else None
+        actions = ','.join(sorted(self.actions)) if self.actions and self.actions != '*' else None
 
-        if self.subscope:
-            extra_parts = (self.action, self.subscope, self.entity_ref)
-        else:
-            extra_parts = (self.action, self.entity_ref)
-
-        for p in extra_parts:
-            if p and p != '*':
-                parts.insert(1, p)
-            elif len(parts) > 1:
-                parts.insert(1, '*')
-
-        if self.subscope and not self.action:
+        if entity_ref:
+            parts.append(entity_ref)
+        elif subscobe or actions:
             parts.append('*')
+
+        if subscobe:
+            parts.append(subscobe)
+            if not actions:
+                parts.append('*')
+
+        if actions:
+            parts.append(actions)
 
         return ':'.join(parts)
 
@@ -127,14 +131,21 @@ class Scope(object):
         if len(parts) > 1 and parts[1] != '*':
             scope.entity_ref = parts[1]
         if len(parts) == 3 and parts[2] != '*':
-            scope.action = parts[2]
+            scope.actions = cls._parse_actions(parts[2])
         if len(parts) == 4:
             if parts[2] != '*':
                 scope.subscope = parts[2]
             if parts[3] != '*':
-                scope.action = parts[3]
+                scope.actions = cls._parse_actions(parts[3])
 
         return scope
+
+    @classmethod
+    def _parse_actions(cls, actions_str):
+        # type: (str) -> Set[str]
+        if not actions_str:
+            return set()
+        return set(actions_str.split(','))
 
 
 class Authzzie(object):
@@ -159,8 +170,8 @@ class Authzzie(object):
     def auth_check(self, entity_type, actions=None, subscopes=None, append=False):
         """Decorator for registering an authorization check function
         """
-        actions = _to_iterable(actions)
-        subscopes = _to_iterable(subscopes)
+        actions = to_iterable(actions)
+        subscopes = to_iterable(subscopes)
         auth_checks = self._auth_checks
 
         def decorator(f):
@@ -178,17 +189,26 @@ class Authzzie(object):
         # type: (Scope) -> Set[str]
         """Get list of granted permissions for an entity / ID
         """
-        auth_checks = self._get_auth_checks(scope)
-        check_results = [self._check_permission(scope, check) for check in auth_checks]
-        if scope.action:
-            return {scope.action}.intersection(*check_results)
+        entity_checks = self._get_auth_checks_for_entity(scope)
+        if scope.actions:
+            # Check permissions for each requested action,
+            check_results = [self._check_permission(check, scope.entity_type, scope.entity_ref)
+                             for action in scope.actions
+                             for check in entity_checks[action]]
+        else:
+            # Fall back to the default checks
+            check_results = [self._check_permission(check, scope.entity_type, scope.entity_ref)
+                             for check in entity_checks[None]]
+
+        if scope.actions:
+            return scope.actions.intersection(*check_results)
         elif len(check_results) == 0:
             return set()
         else:
             return check_results[0].intersection(*check_results[1:])
 
-    def _get_auth_checks(self, scope):
-        # type: (Scope) -> List[AuthCheckCallable]
+    def _get_auth_checks_for_entity(self, scope):
+        # type: (Scope) -> Dict[Optional[str], List[AuthCheckCallable]]
         """Get the authorization checks matching the requested scope
         """
         if scope.entity_type not in self._auth_checks:
@@ -200,27 +220,44 @@ class Authzzie(object):
         else:
             e_checks = e_checks[None]
 
-        if scope.action and scope.action in e_checks:
-            return e_checks[scope.action]
+        return e_checks
 
-        return e_checks[None]
-
-    def _check_permission(self, scope, check):
-        # type: (Scope, AuthCheckCallable) -> Set[str]
+    def _check_permission(self, check, entity_type, entity_ref=None):
+        # type: (AuthCheckCallable, str, Optional[str]) -> Set[str]
         """Call permission check function for scope and return result
         """
-        if scope.entity_ref and scope.entity_type in self._id_parsers:
-            kwargs = self._id_parsers[scope.entity_type](scope.entity_ref)
+        if entity_ref and entity_type in self._id_parsers:
+            kwargs = self._id_parsers[entity_type](entity_ref)
         else:
             # TODO: the entity ID arg name may need to be different based on check spec
-            kwargs = {"id": scope.entity_ref}
+            kwargs = {"id": entity_ref}
 
         return check(**kwargs)
 
 
-def _to_iterable(val):
+def to_iterable(val):
     # type: (Any) -> IterableType
     """Get something we can iterate over from an unknown type
+
+    >>> i = to_iterable([1, 2, 3])
+    >>> next(iter(i))
+    1
+
+    >>> i = to_iterable(1)
+    >>> next(iter(i))
+    1
+
+    >>> i = to_iterable(None)
+    >>> next(iter(i)) is None
+    True
+
+    >>> i = to_iterable('foobar')
+    >>> next(iter(i))
+    'foobar'
+
+    >>> i = to_iterable((1, 2, 3))
+    >>> next(iter(i))
+    1
     """
     if isinstance(val, Iterable) and not isinstance(val, string_types):
         return val
