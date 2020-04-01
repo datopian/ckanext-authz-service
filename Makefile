@@ -55,5 +55,5 @@ test: .tests-passed.sentinel
           --cover-erase \
           --cover-tests
 
-coverrage: .coverage
+coverage: .coverage
 .PHONY: coverage
