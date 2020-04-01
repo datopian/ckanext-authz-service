@@ -29,6 +29,10 @@ after_success:
   - coveralls
 
 jobs:
+  exclude:
+    - python: 3.6
+      env: CKANVERSION=2.8
+
   allow_failures:
     - python: 3.6
     - env: CKANVERSION=master
