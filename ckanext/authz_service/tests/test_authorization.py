@@ -95,3 +95,40 @@ class TestDatasetAuthBinding(FunctionalTestBase):
         with user_context(self.org_admin):
             granted = authzzie.get_permissions(scope)
         assert granted == {'create', 'list'}
+
+
+class TestResourceAuthBinding(FunctionalTestBase):
+    """Test cases for the default authorization binding defined in the extension
+    for resources
+    """
+
+    def setup(self):
+
+        super(TestResourceAuthBinding, self).setup()
+
+        self.org_admin = factories.User()
+        self.org_member = factories.User()
+        self.org = factories.Organization(
+            users=[
+                {'name': self.org_member['name'], 'capacity': 'member'},
+                {'name': self.org_admin['name'], 'capacity': 'admin'},
+            ]
+        )
+
+        self.dataset = factories.Dataset(owner_org=self.org['id'])
+
+    def test_org_member_can_read_all_resources(self):
+        """Test that org member gets 'read' authorized for the entire org
+        """
+        scope = Scope('res', '{}/{}/*'.format(self.org['name'], self.dataset['name']), 'read')
+        with user_context(self.org_member):
+            granted = authzzie.get_permissions(scope)
+        assert granted == {'read'}
+
+    def test_org_admin_can_write_all_resources(self):
+        """Test that org member gets 'read' authorized for the entire org
+        """
+        scope = Scope('res', '{}/{}/*'.format(self.org['name'], self.dataset['name']), ['update', 'create'])
+        with user_context(self.org_admin):
+            granted = authzzie.get_permissions(scope)
+        assert granted == {'update'}

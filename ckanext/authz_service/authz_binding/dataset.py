@@ -2,9 +2,10 @@ from typing import Dict, Optional, Set
 
 from ckan.plugins import toolkit
 
+from . import common as c
 from .common import (authzzie, check_entity_permissions, ckan_auth_check,
                      ckan_get_user_role_in_group, ckan_is_sysadmin,
-                     get_user_context, normalize_id_part)
+                     normalize_id_part)
 
 DS_ENTITY_CHECKS = {"read": "package_show",
                     "list": None,
@@ -110,8 +111,8 @@ def _check_ds_in_org(id, organization_id):
     """Check that a dataset exists in the given organization and that it is readable
     """
     try:
-        ds = toolkit.get_action('package_show')(get_user_context(), {"id": id})
-        if ds.get('owner_org') == organization_id:
+        ds = toolkit.get_action('package_show')(c.get_user_context(), {"id": id})
+        if ds.get('owner_org') == organization_id or ds.get('organization', {}).get('name') == organization_id:
             return True
     except (toolkit.ObjectNotFound, toolkit.NotAuthorized):
         pass

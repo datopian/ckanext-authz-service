@@ -1,6 +1,24 @@
 from typing import Dict, Optional
 
 from .common import authzzie, normalize_id_part
+from .dataset import check_dataset_permissions
+
+RES_ENTITY_CHECKS = {"read": "resource_show",
+                     "create": None,
+                     "update": "resource_update",
+                     "delete": "resource_delete"}
+
+
+@authzzie.auth_check('res', actions=RES_ENTITY_CHECKS.keys() + [None], subscopes=(None, 'data', 'metadata'))
+def check_resource_permissions(id, dataset_id=None, organization_id=None):
+    """Check what resource permissions a user has
+    """
+    if id == '*' or id is None:
+        # Resource permissions for "all resources" can be taken from dataset permissions
+        granted = check_dataset_permissions(id=dataset_id, organization_id=organization_id)
+        return granted.intersection(set(RES_ENTITY_CHECKS.keys()))
+
+    return set()
 
 
 @authzzie.id_parser('res')
