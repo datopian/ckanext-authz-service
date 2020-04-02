@@ -35,11 +35,14 @@ $(SENTINELS)/test.ini: $(TEST_INI_PATH) $(CKAN_PATH)/test-core.ini | $(SENTINELS
 	$(SED) "s@use = config:.*@use = config:$(CKAN_PATH)/test-core.ini@" -i $(TEST_INI_PATH)
 	@touch $@
 
+$(SENTINELS)/requirements: requirements.py$(PYTHON_VERSION).txt dev-requirements.py$(PYTHON_VERSION).txt | $(SENTINELS)
+	@touch $@
+
 $(SENTINELS)/install: requirements.py$(PYTHON_VERSION).txt | $(SENTINELS)
 	$(PIP) install -r requirements.py$(PYTHON_VERSION).txt
 	@touch $@
 
-$(SENTINELS)/develop:  $(SENTINELS)/install $(SENTINELS)/test.ini dev-requirements.py$(PYTHON_VERSION).txt setup.py | $(SENTINELS)
+$(SENTINELS)/develop: $(SENTINELS)/requirements $(SENTINELS)/install $(SENTINELS)/test.ini setup.py | $(SENTINELS)
 	$(PIP) install -r dev-requirements.py$(PYTHON_VERSION).txt
 	$(PIP) install -e .
 	$(PASTER) --plugin=ckan db init -c $(TEST_INI_PATH)
@@ -66,6 +69,9 @@ $(SENTINELS)/tests-passed: $(SENTINELS)/develop $(shell find $(PACKAGE_DIR) -typ
 
 install: $(SENTINELS)/install
 .PHONY: install
+
+requirements: $(SENTINELS)/requirements
+.PHONEY: requirements
 
 develop: $(SENTINELS)/develop
 .PHONEY: develop
