@@ -255,9 +255,10 @@ do:
 
     git clone https://github.com/datopian/ckanext-authz-service.git
     cd ckanext-authz-service
-    python setup.py develop
-    pip install -r dev-requirements.txt
+    make develop
 
+The `make develop` command will take care of installing dependencies for the 
+current Python version. 
 
 ### Generating an RSA keypair for RS* signing & encryption
 
@@ -305,7 +306,7 @@ To publish a new version to PyPI follow these steps:
 
 3. Create a source and binary distributions of the new version:
 ```
-       python setup.py sdist bdist_wheel && twine check dist/*
+    python setup.py sdist bdist_wheel && twine check dist/*
 ```
 
    Fix any errors you get.
