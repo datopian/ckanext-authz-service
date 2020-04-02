@@ -67,9 +67,6 @@ fi
 cd -
 
 echo "Installing ckanext-authz-service and its requirements..."
-pip install -r requirements.txt
-pip install -r dev-requirements.txt
-
-python setup.py develop
+make install develop
 
 echo "travis-build.bash is done."

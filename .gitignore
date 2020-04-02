@@ -12,7 +12,8 @@ __pycache__/
 # Distribution / packaging
 .Python
 env/
-/.venv/
+/.venv*/
+/.python-version
 build/
 develop-eggs/
 dist/
@@ -46,4 +47,4 @@ docs/_build/
 /.idea
 
 # Make sentinel files
-.*.sentinel
+/.make-status/

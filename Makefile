@@ -4,6 +4,7 @@ PACKAGE_DIR := ckanext/authz_service
 PACKAGE_NAME := ckanext.authz_service
 
 SHELL := bash
+PYTHON := python
 PIP := pip
 PIP_COMPILE := pip-compile
 ISORT := isort
@@ -16,24 +17,35 @@ SED := $(shell which gsed sed | head -n1)
 
 TEST_INI_PATH := ./test.ini
 CKAN_PATH := ../ckan
+SENTINELS := .make-status
+
+PYTHON_VERSION := $(shell $(PYTHON) -c 'import sys; print(sys.version_info[0])')
 
 
-dev-requirements.txt: dev-requirements.in
-	$(PIP_COMPILE) --no-index dev-requirements.in -o dev-requirements.txt
+dev-requirements.%.txt: dev-requirements.in
+	$(PIP_COMPILE) --no-index dev-requirements.in -o $@
 
-requirements.txt: requirements.in
-	$(PIP_COMPILE) --no-index requirements.in -o requirements.txt
+requirements.%.txt: requirements.in
+	$(PIP_COMPILE) --no-index requirements.in -o $@
 
-.$(TEST_INI_PATH).sentinel: $(TEST_INI_PATH) $(CKAN_PATH)/test-core.ini
+$(SENTINELS):
+	mkdir -p $@
+
+$(SENTINELS)/test.ini: $(TEST_INI_PATH) $(CKAN_PATH)/test-core.ini | $(SENTINELS)
 	$(SED) "s@use = config:.*@use = config:$(CKAN_PATH)/test-core.ini@" -i $(TEST_INI_PATH)
 	@touch $@
 
-.test-env.sentinel: .$(TEST_INI_PATH).sentinel dev-requirements.txt
-	$(PIP) install -r dev-requirements.txt
+$(SENTINELS)/install: requirements.py$(PYTHON_VERSION).txt | $(SENTINELS)
+	$(PIP) install -r requirements.py$(PYTHON_VERSION).txt
+	@touch $@
+
+$(SENTINELS)/develop:  $(SENTINELS)/install $(SENTINELS)/test.ini dev-requirements.py$(PYTHON_VERSION).txt setup.py | $(SENTINELS)
+	$(PIP) install -r dev-requirements.py$(PYTHON_VERSION).txt
+	$(PIP) install -e .
 	$(PASTER) --plugin=ckan db init -c $(TEST_INI_PATH)
 	@touch $@
 
-.tests-passed.sentinel: .test-env.sentinel $(shell find $(PACKAGE_DIR) -type f) .flake8 .isort.cfg
+$(SENTINELS)/tests-passed: $(SENTINELS)/develop $(shell find $(PACKAGE_DIR) -type f) .flake8 .isort.cfg | $(SENTINELS)
 	$(ISORT) -rc -df -c $(PACKAGE_DIR)
 	$(FLAKE8) --statistics $(PACKAGE_DIR)
 	$(NOSETESTS) --ckan \
@@ -42,10 +54,7 @@ requirements.txt: requirements.in
           --with-doctest
 	@touch $@
 
-test: .tests-passed.sentinel
-.PHONY: test
-
-.coverage: .tests-passed.sentinel $(shell find $(PACKAGE_DIR) -type f) .coveragerc
+.coverage: $(SENTINELS)/tests-passed $(shell find $(PACKAGE_DIR) -type f) .coveragerc
 	$(NOSETESTS) --ckan \
 	      --with-pylons=$(TEST_INI_PATH) \
           --nologcapture \
@@ -54,6 +63,15 @@ test: .tests-passed.sentinel
           --cover-inclusive \
           --cover-erase \
           --cover-tests
+
+install: $(SENTINELS)/install
+.PHONY: install
+
+develop: $(SENTINELS)/develop
+.PHONEY: develop
+
+test: $(SENTINELS)/tests-passed
+.PHONY: test
 
 coverage: .coverage
 .PHONY: coverage
