@@ -260,6 +260,82 @@ do:
 The `make develop` command will take care of installing dependencies for the 
 current Python version. 
 
+### Working with `requirements.txt` files
+
+#### tl;dr
+
+* You *do not* touch `*requirements.*.txt` files directly. We use 
+[`pip-tools`][1] and custom `make` targets to manage these files. 
+* Use `make develop` to install the right development time requirements into your 
+current virtual environment
+* Use `make install` to install the right runtime requirements into your current
+virtual environment
+* To add requirements, edit `requirements.in` or `dev-requirements.in` and run
+`make requirements`. This will recompile the requirements file(s) **for your 
+current Python version**. You may need to do this for the other Python version
+by switching to a different Python virtual environment before committing your 
+changes. 
+ 
+#### More background
+This project manages requirements in a relatively complex way, in order to 
+seamlessly support Python 2.7 and 3.x.
+
+For this reason, you will see 4 requirements files in the project root:
+
+* `requirements.py2.txt` - Python 2 runtime requirements 
+* `requirements.py3.txt` - Python 3 runtime requirements 
+* `dev-requirements.py2.txt` - Python 2 development requirements
+* `dev-requirements.py3.txt` - Python 3 development requirements
+
+These are generated using the `pip-compile` command (a part of `pip-tools`)
+from the corresponding `requirements.in` and `dev-requirements.in` files. 
+
+To understand why `pip-compile` is used, read the `pip-tools` manual. In 
+short, this allows us to pin dependencies of dependencies, thus resolving 
+potential deployment conflicts, without the headache of managing the specific
+version of each Nth-level dependency. 
+
+In order to support both Python 2.7 and 3.x, which tend to require slightly
+different dependencies, we use `requirements.in` files to generate 
+major-version specific requirements files. These, in turn, should be used
+when installing the package. 
+
+In order to simplify things, the `make` targets specified above will automate
+the process *for the current Python version*. 
+
+#### Adding Requirements
+
+Requirements are managed in `.in` files - these are the only files that
+should be edited directly. 
+
+Take care to specify a version for each requirement, to the level required
+to maintain future compatibility, but not to specify an *exact* version 
+unless necessary. 
+
+For example, the following are good `requirements.in` lines:
+
+    pyjwt[crypto]==1.7.*
+    pyyaml==5.*
+    pytz
+    
+This allows these packages to be upgraded to a minor version, without the risk
+of breaking compatibility. 
+
+Note that `pytz` is specified with no version on purpose, as we want it updated
+to the latest possible version on each new rebuild. 
+
+Developers wanting to add new requirements (runtime or development time),
+should take special care to update the `requirements.txt` files for all
+supported Python versions by running `make requirements` on different
+virtual environment, after updating the relevant `.in` file. 
+
+#### Applying Patch-level upgrades to requirements
+
+You can delete `*requirements.*.txt` and run `make requirements`. 
+
+TODO: we can probably do this in a better way - create a `make` target
+for this.  
+
 ### Generating an RSA keypair for RS* signing & encryption
 
 If you want to use the RS* signing / encryption algorithms, here is how to quickly
@@ -328,3 +404,6 @@ To publish a new version to PyPI follow these steps:
     git tag 0.0.1
     git push --tags
 ```
+
+
+[1]: https://pypi.org/project/pip-tools/
