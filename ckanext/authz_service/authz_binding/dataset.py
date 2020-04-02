@@ -27,7 +27,9 @@ def check_dataset_permissions(id, organization_id=None):
         return _check_dataset_permissions_unknown_ds(id, organization_id)
 
     if not _check_ds_in_org(id, organization_id):
-        raise toolkit.ObjectNotFound('Requested org/ds combination not found')
+        # If user can't see the dataset, we'll assume it exists but no permissions
+        return set()
+
     return check_entity_permissions(DS_ENTITY_CHECKS, {"id": id, "owner_org": organization_id})
 
 

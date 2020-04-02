@@ -103,7 +103,7 @@ class TestResourceAuthBinding(FunctionalTestBase):
         self.dataset = factories.Dataset(owner_org=self.org['id'])
 
     def test_org_member_can_read_all_resources(self):
-        """Test that org member gets 'read' authorized for the entire org
+        """Test that org member gets 'read' authorized for all resources of an org owned dataset
         """
         scope = Scope('res', '{}/{}/*'.format(self.org['name'], self.dataset['name']), 'read')
         with user_context(self.org_member):
@@ -111,12 +111,40 @@ class TestResourceAuthBinding(FunctionalTestBase):
         assert granted == {'read'}
 
     def test_org_admin_can_write_all_resources(self):
-        """Test that org member gets 'read' authorized for the entire org
+        """Test that org admin gets 'write' authorized for all resources of an org owned dataset
         """
         scope = Scope('res', '{}/{}/*'.format(self.org['name'], self.dataset['name']), ['update', 'create'])
         with user_context(self.org_admin):
             granted = authzzie.get_permissions(scope)
         assert granted == {'update'}
+
+    def test_non_member_can_read_resources(self):
+        """Test that org member gets 'read' authorized for the entire org
+        """
+        user = factories.User()
+        scope = Scope('res', '{}/{}/*'.format(self.org['name'], self.dataset['name']), ['read'])
+        with user_context(user):
+            granted = authzzie.get_permissions(scope)
+        assert granted == {'read'}
+
+    def test_non_member_cannot_read_private_resources(self):
+        """Test that org member gets 'read' authorized for the entire org
+        """
+        user = factories.User()
+        ds = factories.Dataset(owner_org=self.org['id'], private=True)
+        scope = Scope('res', '{}/{}/*'.format(self.org['name'], ds['name']), ['read'])
+        with user_context(user):
+            granted = authzzie.get_permissions(scope)
+        assert granted == set()
+
+    def test_non_member_cannot_write_resources(self):
+        """Test that org member doesn't get to write resources
+        """
+        user = factories.User()
+        scope = Scope('res', '{}/{}/*'.format(self.org['name'], self.dataset['name']), ['update', 'patch', 'delete'])
+        with user_context(user):
+            granted = authzzie.get_permissions(scope)
+        assert granted == set()
 
 
 class TestOrganizationAuthBinding(FunctionalTestBase):
