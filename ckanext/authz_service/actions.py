@@ -3,7 +3,7 @@
 import random
 import string
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Set
+from typing import Dict, List, Optional
 
 import jwt
 import pytz
@@ -20,8 +20,6 @@ DEFAULT_MAX_LIFETIME = 900
 
 def authorize(context, data_dict):
     """Request an authorization token for a list of scopes
-
-    TODO: allow requesting expiration time
     """
     scopes = toolkit.get_or_bust(data_dict, 'scopes')
     if isinstance(scopes, string_types):
@@ -33,17 +31,16 @@ def authorize(context, data_dict):
     expires = datetime.now(tz=pytz.utc) + timedelta(seconds=lifetime)
 
     try:
-        granted_permissions = filter(None, (_normalize_granted_permissions(s, authzzie.get_permissions(s))
-                                            for s in requested_scopes))
+        granted_scopes = map(str, filter(None, (authzzie.check_scope(s) for s in requested_scopes)))
     except UnknownEntityType as e:
         raise toolkit.ValidationError(str(e))
 
     user = context.get('auth_user_obj')
     return {"user_id": user.name,
-            "token": _create_token(user, granted_permissions, expires),
+            "token": _create_token(user, granted_scopes, expires),
             "expires_at": expires.isoformat(),
             "requested_scopes": [str(s) for s in requested_scopes],
-            "granted_scopes": granted_permissions}
+            "granted_scopes": granted_scopes}
 
 
 @toolkit.side_effect_free
@@ -95,23 +92,19 @@ def public_key(*_, **__):
 
 
 def _create_token(user, scopes, expires):
-    # type: (Dict, List, datetime) -> str
+    # type: (Dict, List[Scope], datetime) -> str
     """Create a JWT token
     """
     jwt_algorithm = util.get_config('jwt_algorithm', 'RS256')
-
     private_key = _get_private_key()
-    if not private_key:
-        raise ValueError("JWT secret key is not configured")
-
     issuer = util.get_config('jwt_issuer', toolkit.config.get('ckan.site_url'))
 
     payload = {"exp": expires,
                "nbf": datetime.now(tz=pytz.utc),
                "sub": user.name,
                "iss": issuer,
-               "name": user.fullname,  # The user's name  # TODO: implement
-               "scopes": ' '.join(str(s) for s in scopes)}
+               "name": user.fullname,
+               "scopes": ' '.join(scopes)}
 
     audience = util.get_config('jwt_audience')
     if audience:
@@ -156,13 +149,3 @@ def _generate_jti(length=8):
     """Generate a unique token ID
     """
     return b''.join(random.choice(string.printable) for _ in range(length))
-
-
-def _normalize_granted_permissions(scope, granted_permissions):
-    # type: (Scope, Set[str]) -> Optional[str]
-    """Convert a scope object and a set of granted permissions to a string
-    """
-    if len(granted_permissions) == 0:
-        return None
-    scope.actions = ','.join(granted_permissions)
-    return str(scope)

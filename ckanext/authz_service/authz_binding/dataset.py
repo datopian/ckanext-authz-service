@@ -16,7 +16,7 @@ DS_ENTITY_CHECKS = {"read": "package_show",
                     "purge": "dataset_purge"}
 
 
-@authzzie.auth_check('ds', actions=DS_ENTITY_CHECKS.keys() + [None], subscopes=(None, 'data', 'metadata'))
+@authzzie.authorizer('ds', actions=DS_ENTITY_CHECKS.keys() + [None], subscopes=(None, 'data', 'metadata'))
 def check_dataset_permissions(id, organization_id=None):
     """Check what dataset permissions a user has
     """

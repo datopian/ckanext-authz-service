@@ -9,7 +9,7 @@ RES_ENTITY_CHECKS = {"read": "resource_show",
                      "delete": "resource_delete"}
 
 
-@authzzie.auth_check('res', actions=RES_ENTITY_CHECKS.keys() + [None], subscopes=(None, 'data', 'metadata'))
+@authzzie.authorizer('res', actions=RES_ENTITY_CHECKS.keys() + [None], subscopes=(None, 'data', 'metadata'))
 def check_resource_permissions(id, dataset_id=None, organization_id=None):
     """Check what resource permissions a user has
     """

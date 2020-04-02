@@ -8,6 +8,7 @@ You can use Authzzie to use an existing system to check if a user in that
 system is granted permission X, and if so grant them permission Y in a
 different system.
 """
+import copy
 from collections import Iterable, defaultdict
 from typing import Any, Dict
 from typing import Iterable as IterableType
@@ -153,7 +154,8 @@ class Authzzie(object):
     """
 
     def __init__(self):
-        self._auth_checks = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
+        self._authorizers = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
+        self._scope_normalizers = {}
         self._id_parsers = {}
 
     def id_parser(self, entity_type):
@@ -167,23 +169,58 @@ class Authzzie(object):
 
         return decorator
 
-    def auth_check(self, entity_type, actions=None, subscopes=None, append=False):
+    def authorizer(self, entity_type, actions=None, subscopes=None, append=False):
         """Decorator for registering an authorization check function
         """
         actions = to_iterable(actions)
         subscopes = to_iterable(subscopes)
-        auth_checks = self._auth_checks
+        auth_checks = self._authorizers[entity_type]
 
         def decorator(f):
             for s in subscopes:
                 for a in actions:
                     if append:
-                        auth_checks[entity_type][s][a].append(f)
+                        auth_checks[s][a].append(f)
                     else:
-                        auth_checks[entity_type][s][a] = [f]
+                        auth_checks[s][a] = [f]
             return f
 
         return decorator
+
+    def scope_normalizer(self, entity_type, subscope=None):
+        """Decorator for registering a scope normalizer function
+
+        Scope normalizer functions are called, if registered, for each *granted*
+        scope. They allow implementors to normalize granted scopes, for example
+        by removing actions implied by other granted actions.
+        """
+        scope_normalizers = self._scope_normalizers
+
+        def decorator(f):
+            scope_normalizers[(entity_type, subscope)] = f
+            return f
+
+        return decorator
+
+    def check_scope(self, scope):
+        # type: (Scope) -> Optional[Scope]
+        """Check a requested permission scope and return a granted scope
+
+        This is a wrapper around `get_permissions` that normalizes granted
+        permissions into a scope object. If no permissions are granted, will
+        return `None`.
+        """
+        permissions = self.get_permissions(scope)
+        if len(permissions) == 0:
+            return None
+
+        granted = copy.copy(scope)
+        granted.actions = permissions
+        if (scope.entity_type, scope.subscope) in self._scope_normalizers:
+            normalize = self._scope_normalizers[(scope.entity_type, scope.subscope)]
+            granted = normalize(scope, granted, self._id_parsers.get(scope.entity_type))
+
+        return granted
 
     def get_permissions(self, scope):
         # type: (Scope) -> Set[str]
@@ -201,20 +238,22 @@ class Authzzie(object):
                              for check in entity_checks[None]]
 
         if scope.actions:
-            return scope.actions.intersection(*check_results)
+            granted = scope.actions.intersection(*check_results)
         elif len(check_results) == 0:
-            return set()
+            granted = set()
         else:
-            return check_results[0].intersection(*check_results[1:])
+            granted = check_results[0].intersection(*check_results[1:])
+
+        return granted
 
     def _get_auth_checks_for_entity(self, scope):
         # type: (Scope) -> Dict[Optional[str], List[AuthCheckCallable]]
         """Get the authorization checks matching the requested scope
         """
-        if scope.entity_type not in self._auth_checks:
+        if scope.entity_type not in self._authorizers:
             raise UnknownEntityType("Unknown entity type: {}".format(scope.entity_type))
 
-        e_checks = self._auth_checks[scope.entity_type]
+        e_checks = self._authorizers[scope.entity_type]
         if scope.subscope and scope.subscope in e_checks:
             e_checks = e_checks[scope.subscope]
         else:

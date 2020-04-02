@@ -1,24 +1,9 @@
-from contextlib import contextmanager
-
-from ckan import model
 from ckan.tests import factories, helpers
-from mock import patch
 
 from ckanext.authz_service.authz_binding import authzzie
 from ckanext.authz_service.authzzie import Scope
 
-from . import FunctionalTestBase
-
-
-@contextmanager
-def user_context(user):
-    def mock_context():
-        return {"modle": model,
-                "user": user['name'],
-                "userobj": model.User.get(user['name'])}
-
-    with patch('ckanext.authz_service.authz_binding.common.get_user_context', mock_context):
-        yield
+from . import FunctionalTestBase, user_context
 
 
 class TestDatasetAuthBinding(FunctionalTestBase):
