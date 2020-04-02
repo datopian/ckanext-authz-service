@@ -67,6 +67,6 @@ fi
 cd -
 
 echo "Installing ckanext-authz-service and its requirements..."
-make install develop
+make install develop CKAN_PATH=./ckan
 
 echo "travis-build.bash is done."
