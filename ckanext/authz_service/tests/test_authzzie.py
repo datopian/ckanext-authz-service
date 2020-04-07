@@ -43,3 +43,18 @@ class TestAuthzzieScope(object):
         """Test scope stringification works as expected
         """
         assert str(scope) == expected
+
+
+class TestAuthzzie(object):
+
+    def test_authzzie_non_bound_action_not_granted(self):
+        az = authzzie.Authzzie()
+
+        @az.authorizer('foo', {'read', 'write'})
+        def test_authorizer(_):
+            return set()
+
+        scope = authzzie.Scope('foo', 'entity-01', {'delete'})
+        granted = az.get_permissions(scope)
+
+        assert granted == set()

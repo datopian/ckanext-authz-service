@@ -237,10 +237,10 @@ class Authzzie(object):
             check_results = [self._check_permission(check, scope.entity_type, scope.entity_ref)
                              for check in entity_checks[None]]
 
-        if scope.actions:
-            granted = scope.actions.intersection(*check_results)
-        elif len(check_results) == 0:
+        if len(check_results) == 0:
             granted = set()
+        elif scope.actions:
+            granted = scope.actions.intersection(*check_results)
         else:
             granted = check_results[0].intersection(*check_results[1:])
 
