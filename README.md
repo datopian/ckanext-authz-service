@@ -244,8 +244,21 @@ Defaults to `False`.
 #### `ckanext.authz_service.jwt_include_token_id` (Boolean)
 
 Whether to include a unique ID as the JWT `jti` claim. Useful if consumers
-want to ensure a token has not been replayed. 
+want to ensure a token has not been replayed.
 Defaults to `False`.
+
+Adding Authorization Bindings in CKAN extensions
+------------------------------------------------
+`ckanext-authz-service` allows other CKAN extensions to modify the default
+authorization logic for different entities as well as register authorization
+rules for new entity types.
+
+This can be done by implementing the `IAuthorizationBindings` extension
+interface.
+
+**TBD**
+
+For now see `ckanext.authz_service.plugin` for an example on how to use.
 
 Developer installation
 ----------------------
