@@ -10,20 +10,23 @@ different system.
 """
 import copy
 from collections import Iterable, defaultdict
-from typing import Any, Dict
-from typing import Iterable as IterableType
-from typing import List, Optional, Set, Union
+from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 
 from six import string_types
 from typing_extensions import Protocol
 
 
-class AuthCheckCallable(Protocol):
+class AuthorizerCallable(Protocol):
     """Type declaration for authentication check callable
     """
     def __call__(self, **kwargs):
         # type: (**str) -> Set[str]
         raise NotImplementedError('You should not be instantiating this')
+
+
+IdParserCallable = Callable[[str], Dict[str, str]]
+
+ScopeNormalizerCallable = Callable[['Scope', 'Scope'], 'Scope']
 
 
 class UnknownEntityType(ValueError):
@@ -155,52 +158,39 @@ class Authzzie(object):
 
     def __init__(self):
         self._authorizers = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
-        self._scope_normalizers = {}
-        self._id_parsers = {}
+        self._scope_normalizers = {}  # type: Dict[Tuple[str, Optional[str]], ScopeNormalizerCallable]
+        self._id_parsers = {}  # type: Dict[str, IdParserCallable]
 
-    def id_parser(self, entity_type):
-        """Decorator for registering an ID parser function
+    def register_id_parser(self, entity_type, function):
+        # type: (str, IdParserCallable) -> None
+        """Register an ID parser for an entity type
         """
-        id_parsers = self._id_parsers
+        self._id_parsers[entity_type] = function
 
-        def decorator(f):
-            id_parsers[entity_type] = f
-            return f
-
-        return decorator
-
-    def authorizer(self, entity_type, actions=None, subscopes=None, append=False):
-        """Decorator for registering an authorization check function
+    def register_authorizer(self, entity_type, function, actions=None, subscopes=None, append=False):
+        # type: (str, AuthorizerCallable, Union[Set[str], str, None], Union[Set[str], str, None], bool) -> None
+        """Register an authorizer function for an entity type, subscopes and actions
         """
         actions = to_iterable(actions)
         subscopes = to_iterable(subscopes)
         auth_checks = self._authorizers[entity_type]
 
-        def decorator(f):
-            for s in subscopes:
-                for a in actions:
-                    if append:
-                        auth_checks[s][a].append(f)
-                    else:
-                        auth_checks[s][a] = [f]
-            return f
+        for s in subscopes:
+            for a in actions:
+                if append:
+                    auth_checks[s][a].append(function)
+                else:
+                    auth_checks[s][a] = [function]
 
-        return decorator
-
-    def scope_normalizer(self, entity_type, subscope=None):
-        """Decorator for registering a scope normalizer function
+    def register_scope_normalizer(self, entity_type, function, subscope=None):
+        # type: (str, ScopeNormalizerCallable, Optional[str]) -> None
+        """Register a scope normalizer function
 
         Scope normalizer functions are called, if registered, for each *granted*
         scope. They allow implementors to normalize granted scopes, for example
         by removing actions implied by other granted actions.
         """
-        scope_normalizers = self._scope_normalizers
-
-        def decorator(f):
-            scope_normalizers[(entity_type, subscope)] = f
-            return f
-
-        return decorator
+        self._scope_normalizers[(entity_type, subscope)] = function
 
     def check_scope(self, scope):
         # type: (Scope) -> Optional[Scope]
@@ -218,7 +208,7 @@ class Authzzie(object):
         granted.actions = permissions
         if (scope.entity_type, scope.subscope) in self._scope_normalizers:
             normalize = self._scope_normalizers[(scope.entity_type, scope.subscope)]
-            granted = normalize(scope, granted, self._id_parsers.get(scope.entity_type))
+            granted = normalize(scope, granted)
 
         return granted
 
@@ -247,7 +237,7 @@ class Authzzie(object):
         return granted
 
     def _get_auth_checks_for_entity(self, scope):
-        # type: (Scope) -> Dict[Optional[str], List[AuthCheckCallable]]
+        # type: (Scope) -> Dict[Optional[str], List[AuthorizerCallable]]
         """Get the authorization checks matching the requested scope
         """
         if scope.entity_type not in self._authorizers:
@@ -262,7 +252,7 @@ class Authzzie(object):
         return e_checks
 
     def _check_permission(self, check, entity_type, entity_ref=None):
-        # type: (AuthCheckCallable, str, Optional[str]) -> Set[str]
+        # type: (AuthorizerCallable, str, Optional[str]) -> Set[str]
         """Call permission check function for scope and return result
         """
         if entity_ref and entity_type in self._id_parsers:
@@ -275,7 +265,7 @@ class Authzzie(object):
 
 
 def to_iterable(val):
-    # type: (Any) -> IterableType
+    # type: (Any) -> Iterable
     """Get something we can iterate over from an unknown type
 
     >>> i = to_iterable([1, 2, 3])

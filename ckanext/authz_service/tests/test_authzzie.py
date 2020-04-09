@@ -1,6 +1,5 @@
 """Tests for the Authzzie permission mapping library
 """
-# from nose.tools import assert_raises
 from parameterized import parameterized
 from six import iteritems
 
@@ -48,11 +47,12 @@ class TestAuthzzieScope(object):
 class TestAuthzzie(object):
 
     def test_authzzie_non_bound_action_not_granted(self):
-        az = authzzie.Authzzie()
 
-        @az.authorizer('foo', {'read', 'write'})
         def test_authorizer(_):
             return set()
+
+        az = authzzie.Authzzie()
+        az.register_authorizer('foo', test_authorizer, {'read', 'write'})
 
         scope = authzzie.Scope('foo', 'entity-01', {'delete'})
         granted = az.get_permissions(scope)
