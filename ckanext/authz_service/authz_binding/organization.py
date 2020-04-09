@@ -3,8 +3,7 @@
 from typing import Optional, Set
 
 from ..authzzie import Scope
-from .common import (authzzie, check_entity_permissions, ckan_auth_check,
-                     ckan_is_sysadmin)
+from .common import check_entity_permissions, ckan_auth_check, ckan_is_sysadmin
 
 ORG_ENTITY_CHECKS = {"read": "organization_show",
                      "list": None,
@@ -15,7 +14,6 @@ ORG_ENTITY_CHECKS = {"read": "organization_show",
                      "purge": "organization_purge"}
 
 
-@authzzie.authorizer('org', actions=ORG_ENTITY_CHECKS.keys() + [None])
 def check_org_permissions(id):
     # type: (str, Optional[str]) -> Set[str]
     """Check what org permissions a user has
@@ -42,8 +40,7 @@ def check_org_permissions(id):
     return granted
 
 
-@authzzie.scope_normalizer('org')
-def normalize_org_scope(requested, granted, *_, **__):
+def normalize_org_scope(requested, granted):
     # type: (Scope, Scope) -> Scope
     """Normalize an org granted scope
     """

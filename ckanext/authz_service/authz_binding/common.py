@@ -6,10 +6,6 @@ from ckan.common import g
 from ckan.plugins import toolkit
 from six import iteritems
 
-from ..authzzie import Authzzie
-
-authzzie = Authzzie()
-
 
 def normalize_id_part(id_part):
     # type: (str) -> Optional[str]

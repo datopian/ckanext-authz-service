@@ -3,8 +3,7 @@ from typing import Dict, Optional, Set
 from ckan.plugins import toolkit
 
 from . import common as c
-from .common import (authzzie, check_entity_permissions, ckan_auth_check,
-                     ckan_get_user_role_in_group, ckan_is_sysadmin,
+from .common import (check_entity_permissions, ckan_auth_check, ckan_get_user_role_in_group, ckan_is_sysadmin,
                      normalize_id_part)
 
 DS_ENTITY_CHECKS = {"read": "package_show",
@@ -16,7 +15,6 @@ DS_ENTITY_CHECKS = {"read": "package_show",
                     "purge": "dataset_purge"}
 
 
-@authzzie.authorizer('ds', actions=DS_ENTITY_CHECKS.keys() + [None], subscopes=(None, 'data', 'metadata'))
 def check_dataset_permissions(id, organization_id=None):
     """Check what dataset permissions a user has
     """
@@ -79,7 +77,6 @@ def _check_dataset_permissions_unknown_ds(id, organization_id):
     return granted
 
 
-@authzzie.id_parser('ds')
 def dataset_id_parser(id):
     # type: (str) -> Dict[str, Optional[str]]
     """ID parser for dataset entities

@@ -12,13 +12,12 @@ from six import string_types
 from six.moves import range
 
 from . import util
-from .authz_binding import authzzie
 from .authzzie import Scope, UnknownEntityType
 
 DEFAULT_MAX_LIFETIME = 900
 
 
-def authorize(context, data_dict):
+def authorize(authorizer, context, data_dict):
     """Request an authorization token for a list of scopes
     """
     scopes = toolkit.get_or_bust(data_dict, 'scopes')
@@ -31,7 +30,7 @@ def authorize(context, data_dict):
     expires = datetime.now(tz=pytz.utc) + timedelta(seconds=lifetime)
 
     try:
-        granted_scopes = map(str, filter(None, (authzzie.check_scope(s) for s in requested_scopes)))
+        granted_scopes = map(str, filter(None, (authorizer.check_scope(s) for s in requested_scopes)))
     except UnknownEntityType as e:
         raise toolkit.ValidationError(str(e))
 
