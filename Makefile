@@ -67,6 +67,10 @@ $(SENTINELS)/tests-passed: $(SENTINELS)/develop $(shell find $(PACKAGE_DIR) -typ
           --cover-erase \
           --cover-tests
 
+html-docs:  # $(SENTINELS)/develop
+	cd docs && make html
+.PHONY: html-docs
+
 install: $(SENTINELS)/install
 .PHONY: install
 

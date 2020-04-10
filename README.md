@@ -378,6 +378,20 @@ coverage installed in your virtualenv (``pip install coverage``) then run:
 
     make coverage
 
+Building the Documentation
+--------------------------
+Over time, this project will be documented using Sphinx in the `docs/` 
+directory. You can update and regenerate the project documentation 
+as HTML files by:
+
+1. Switch into a Python 3.x virtual environment (documentation can only
+be built using Python 3.x)
+
+2. Run `make docs-html`
+
+The updated documentation will be avilable at 
+`docs/_build/html/index.html`.
+
 Releasing a new version of ckanext-authz-service
 ------------------------------------------------
 
