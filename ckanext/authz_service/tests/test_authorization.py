@@ -241,3 +241,19 @@ class TestOrganizationAuthBinding(FunctionalTestBase):
             granted = self.az.authorize_scope(scope)
         assert granted.actions == {'create', 'list'}
         assert granted.entity_type == 'grp'
+
+    def test_update_can_be_aliased_as_write(self):
+        """Test that sysadmins can create new organizations
+        """
+        # Test without alias
+        scope = Scope('org', '*', actions=['read', 'write'])
+        with user_context(self.sysadmin):
+            granted = self.az.authorize_scope(scope)
+        assert granted.entity_type == 'org'
+        assert granted.actions == {'read'}
+
+        # Now test with alias
+        self.az.register_action_alias('write', 'update', 'org')
+        with user_context(self.sysadmin):
+            granted = self.az.authorize_scope(scope)
+        assert granted.actions == {'read', 'write'}

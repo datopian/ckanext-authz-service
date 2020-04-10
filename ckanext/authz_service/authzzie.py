@@ -12,7 +12,7 @@ import copy
 from collections import Iterable, defaultdict
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 
-from six import string_types
+from six import iteritems, string_types
 from typing_extensions import Protocol
 
 
@@ -161,6 +161,7 @@ class Authzzie(object):
         self._scope_normalizers = {}  # type: Dict[Tuple[str, Optional[str]], ScopeNormalizerCallable]
         self._ref_parsers = {}  # type: Dict[str, IdParserCallable]
         self._type_aliases = {}  # type: Dict[str, str]
+        self._action_aliases = {}  # type: Dict[Tuple[str, Optional[str], str], str]
 
     def register_entity_ref_parser(self, entity_type, function):
         # type: (str, IdParserCallable) -> None
@@ -203,6 +204,16 @@ class Authzzie(object):
         """
         self._type_aliases[alias] = original
 
+    def register_action_alias(self, alias, original, entity_type, subscope=None):
+        # type: (str, str, str, Optional[str]) -> None
+        """Register an action name alias
+
+        Action aliases allow aliasing an existing CKAN entity action (or a custom
+        action added by an extension) with a new name, acceptable by an external
+        service.
+        """
+        self._action_aliases[(entity_type, subscope, alias)] = original
+
     def authorize_scope(self, scope):
         # type: (Scope) -> Optional[Scope]
         """Check a requested permission scope and return a granted scope
@@ -211,12 +222,12 @@ class Authzzie(object):
         permissions into a scope object. If no permissions are granted, will
         return `None`.
         """
-        permissions = self.get_granted_actions(scope)
-        if len(permissions) == 0:
+        granted_actions = self.get_granted_actions(scope)
+        if len(granted_actions) == 0:
             return None
 
         granted = copy.copy(scope)
-        granted.actions = permissions
+        granted.actions = granted_actions
         entity_type = self._type_aliases.get(scope.entity_type, scope.entity_type)
         if (entity_type, scope.subscope) in self._scope_normalizers:
             normalize = self._scope_normalizers[(entity_type, scope.subscope)]
@@ -229,12 +240,6 @@ class Authzzie(object):
         """Get list of granted permissions for an entity / ID
         """
         granted = self._call_authorizers_for_scope(scope)
-
-        for action in granted:
-            k = (scope.entity_type, scope.subscope, action)
-            if k in self._action_aliases:
-                granted.update(self._action_aliases[k])
-
         if scope.actions:
             granted = scope.actions.intersection(granted)
 
@@ -243,12 +248,15 @@ class Authzzie(object):
     def _call_authorizers_for_scope(self, scope):
         # type: (Scope) -> Set[str]
         """Calculate granted permissions based on requested scope
+
+        This also handles action aliases
         """
         entity_checks = self._get_entity_authorizers(scope)
+        action_map = self._get_action_map(scope)
         if scope.actions:
-            # Check permissions for each requested action,
+            # Check permissions for each requested action
             check_results = [self._call_authorizer(check, scope.entity_type, scope.entity_ref)
-                             for action in scope.actions
+                             for action in action_map.keys()
                              for check in entity_checks[action]]
         else:
             # Fall back to the default checks
@@ -258,7 +266,30 @@ class Authzzie(object):
         if len(check_results) == 0:
             return set()
 
-        return check_results[0].intersection(*check_results[1:])
+        granted = check_results[0].intersection(*check_results[1:])
+
+        # Translate original actions back to aliases if an alias was requested
+        granted.update(alias for action, alias in iteritems(action_map) if action in granted)
+
+        return granted
+
+    def _get_action_map(self, scope):
+        # type: (Scope) -> Dict[str, str]
+        """Get a map of action -> (action or alias) for scope
+
+        If action is not aliased, will return the original action name twice
+        This supports action aliases.
+        """
+        if not scope.actions:
+            return {}
+
+        action_map = {}
+        entity_type = self._type_aliases.get(scope.entity_type, scope.entity_type)
+        for action in scope.actions:
+            original = self._action_aliases.get((entity_type, scope.subscope, action), action)
+            action_map[original] = action
+
+        return action_map
 
     def _get_entity_authorizers(self, scope):
         # type: (Scope) -> Dict[Optional[str], List[AuthorizerCallable]]

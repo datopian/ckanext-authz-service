@@ -1,5 +1,6 @@
 """Tests for the Authzzie permission mapping library
 """
+from nose.tools import assert_equals
 from parameterized import parameterized
 from six import iteritems
 
@@ -81,3 +82,29 @@ class TestAuthzzie(object):
 
         assert granted == {'read'}
 
+    def test_action_aliases(self):
+
+        def test_authorizer(**_):
+            return {'read'}
+
+        az = authzzie.Authzzie()
+        az.register_authorizer('foo', test_authorizer, {'read', 'write'})
+        az.register_action_alias('look-at-things', 'read', 'foo')
+
+        scope = authzzie.Scope('foo', 'entity-01', {'look-at-things'})
+        granted = az.authorize_scope(scope)
+        assert_equals(str(granted), 'foo:entity-01:look-at-things')
+
+    def test_action_aliases_with_type_alias(self):
+
+        def test_authorizer(**_):
+            return {'read'}
+
+        az = authzzie.Authzzie()
+        az.register_authorizer('foo', test_authorizer, {'read', 'write'})
+        az.register_action_alias('look-at-things', 'read', 'foo')
+        az.register_type_alias('bar', 'foo')
+
+        scope = authzzie.Scope('bar', 'entity-01', {'look-at-things'})
+        granted = az.authorize_scope(scope)
+        assert_equals(str(granted), 'bar:entity-01:look-at-things')
