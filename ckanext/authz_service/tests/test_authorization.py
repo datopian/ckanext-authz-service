@@ -31,7 +31,7 @@ class TestDatasetAuthBinding(FunctionalTestBase):
         """
         scope = Scope('ds', '{}/*'.format(self.org['name']), 'read')
         with user_context(self.org_member):
-            granted = self.az.get_permissions(scope)
+            granted = self.az.get_granted_actions(scope)
         assert granted == {'read'}
 
     def test_org_member_cannot_write_all_datasets(self):
@@ -39,7 +39,7 @@ class TestDatasetAuthBinding(FunctionalTestBase):
         """
         scope = Scope('ds', '{}/*'.format(self.org['name']), 'update')
         with user_context(self.org_member):
-            granted = self.az.get_permissions(scope)
+            granted = self.az.get_granted_actions(scope)
         assert granted == set()
 
     def test_non_member_cannot_read_all_datasets(self):
@@ -48,7 +48,7 @@ class TestDatasetAuthBinding(FunctionalTestBase):
         scope = Scope('ds', '{}/*'.format(self.org['name']), 'read')
         user = factories.User()
         with user_context(user):
-            granted = self.az.get_permissions(scope)
+            granted = self.az.get_granted_actions(scope)
         assert granted == set()
 
     def test_org_admin_can_update_all_datasets(self):
@@ -56,7 +56,7 @@ class TestDatasetAuthBinding(FunctionalTestBase):
         """
         scope = Scope('ds', '{}/*'.format(self.org['name']), 'update')
         with user_context(self.org_admin):
-            granted = self.az.get_permissions(scope)
+            granted = self.az.get_granted_actions(scope)
         assert granted == {'update'}
 
     def test_org_admin_can_patch_all_datasets(self):
@@ -64,7 +64,7 @@ class TestDatasetAuthBinding(FunctionalTestBase):
         """
         scope = Scope('ds', '{}/*'.format(self.org['name']), 'create')
         with user_context(self.org_admin):
-            granted = self.az.get_permissions(scope)
+            granted = self.az.get_granted_actions(scope)
         assert granted == {'create'}
 
     def test_org_member_global_dataset_actions(self):
@@ -72,7 +72,7 @@ class TestDatasetAuthBinding(FunctionalTestBase):
         """
         scope = Scope('ds', '{}/'.format(self.org['name']))
         with user_context(self.org_member):
-            granted = self.az.get_permissions(scope)
+            granted = self.az.get_granted_actions(scope)
         assert granted == {'list'}
 
     def test_org_admin_global_dataset_actions(self):
@@ -80,7 +80,7 @@ class TestDatasetAuthBinding(FunctionalTestBase):
         """
         scope = Scope('ds', '{}/'.format(self.org['name']))
         with user_context(self.org_admin):
-            granted = self.az.get_permissions(scope)
+            granted = self.az.get_granted_actions(scope)
         assert granted == {'create', 'list'}
 
 
@@ -111,7 +111,7 @@ class TestResourceAuthBinding(FunctionalTestBase):
         """
         scope = Scope('res', '{}/{}/*'.format(self.org['name'], self.dataset['name']), 'read')
         with user_context(self.org_member):
-            granted = self.az.get_permissions(scope)
+            granted = self.az.get_granted_actions(scope)
         assert granted == {'read'}
 
     def test_org_admin_can_write_all_resources(self):
@@ -119,7 +119,7 @@ class TestResourceAuthBinding(FunctionalTestBase):
         """
         scope = Scope('res', '{}/{}/*'.format(self.org['name'], self.dataset['name']), ['update', 'create'])
         with user_context(self.org_admin):
-            granted = self.az.get_permissions(scope)
+            granted = self.az.get_granted_actions(scope)
         assert granted == {'update'}
 
     def test_non_member_can_read_resources(self):
@@ -128,7 +128,7 @@ class TestResourceAuthBinding(FunctionalTestBase):
         user = factories.User()
         scope = Scope('res', '{}/{}/*'.format(self.org['name'], self.dataset['name']), ['read'])
         with user_context(user):
-            granted = self.az.get_permissions(scope)
+            granted = self.az.get_granted_actions(scope)
         assert granted == {'read'}
 
     def test_non_member_cannot_read_private_resources(self):
@@ -138,7 +138,7 @@ class TestResourceAuthBinding(FunctionalTestBase):
         ds = factories.Dataset(owner_org=self.org['id'], private=True)
         scope = Scope('res', '{}/{}/*'.format(self.org['name'], ds['name']), ['read'])
         with user_context(user):
-            granted = self.az.get_permissions(scope)
+            granted = self.az.get_granted_actions(scope)
         assert granted == set()
 
     def test_non_member_cannot_write_resources(self):
@@ -147,7 +147,7 @@ class TestResourceAuthBinding(FunctionalTestBase):
         user = factories.User()
         scope = Scope('res', '{}/{}/*'.format(self.org['name'], self.dataset['name']), ['update', 'patch', 'delete'])
         with user_context(user):
-            granted = self.az.get_permissions(scope)
+            granted = self.az.get_granted_actions(scope)
         assert granted == set()
 
 
@@ -179,7 +179,7 @@ class TestOrganizationAuthBinding(FunctionalTestBase):
         """
         scope = Scope('org', self.org['name'], 'read')
         with user_context(self.org_member):
-            granted = self.az.get_permissions(scope)
+            granted = self.az.get_granted_actions(scope)
         assert granted == {'read'}
 
     def test_org_member_cannot_update_org(self):
@@ -187,7 +187,7 @@ class TestOrganizationAuthBinding(FunctionalTestBase):
         """
         scope = Scope('org', self.org['name'], 'update')
         with user_context(self.org_member):
-            granted = self.az.get_permissions(scope)
+            granted = self.az.get_granted_actions(scope)
         assert granted == set()
 
     def test_org_admin_can_update_org(self):
@@ -195,7 +195,7 @@ class TestOrganizationAuthBinding(FunctionalTestBase):
         """
         scope = Scope('org', self.org['name'], 'update')
         with user_context(self.org_admin):
-            granted = self.az.get_permissions(scope)
+            granted = self.az.get_granted_actions(scope)
         assert granted == {'update'}
 
     def test_org_admin_cannot_update_other_org(self):
@@ -203,7 +203,7 @@ class TestOrganizationAuthBinding(FunctionalTestBase):
         """
         scope = Scope('org', self.other_org['name'], 'update')
         with user_context(self.org_admin):
-            granted = self.az.get_permissions(scope)
+            granted = self.az.get_granted_actions(scope)
         assert granted == set()
 
     def test_org_admin_cannot_create_new_orgs(self):
@@ -216,12 +216,12 @@ class TestOrganizationAuthBinding(FunctionalTestBase):
 
         with helpers.changed_config('ckan.auth.user_create_organizations', False):
             with user_context(self.org_admin):
-                granted = self.az.get_permissions(scope)
+                granted = self.az.get_granted_actions(scope)
             assert granted == {'list'}
 
         with helpers.changed_config('ckan.auth.user_create_organizations', True):
             with user_context(self.org_admin):
-                granted = self.az.get_permissions(scope)
+                granted = self.az.get_granted_actions(scope)
             assert granted == {'list', 'create'}
 
     def test_sysadmin_can_create_new_orgs(self):
@@ -229,5 +229,15 @@ class TestOrganizationAuthBinding(FunctionalTestBase):
         """
         scope = Scope('org', actions=['create', 'list'])
         with user_context(self.sysadmin):
-            granted = self.az.get_permissions(scope)
+            granted = self.az.get_granted_actions(scope)
         assert granted == {'create', 'list'}
+
+    def test_org_can_be_aliased_as_group(self):
+        """Test that sysadmins can create new organizations
+        """
+        self.az.register_type_alias('grp', 'org')
+        scope = Scope('grp', actions=['create', 'list'])
+        with user_context(self.sysadmin):
+            granted = self.az.authorize_scope(scope)
+        assert granted.actions == {'create', 'list'}
+        assert granted.entity_type == 'grp'

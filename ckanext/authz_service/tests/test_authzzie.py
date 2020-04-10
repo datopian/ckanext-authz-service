@@ -55,6 +55,29 @@ class TestAuthzzie(object):
         az.register_authorizer('foo', test_authorizer, {'read', 'write'})
 
         scope = authzzie.Scope('foo', 'entity-01', {'delete'})
-        granted = az.get_permissions(scope)
+        granted = az.get_granted_actions(scope)
 
         assert granted == set()
+
+    def test_type_aliases(self):
+
+        def test_authorizer(**_):
+            return {'read'}
+
+        def test_id_parser(id):
+            return {"id": id}
+
+        def test_scope_normalizer(_, granted):
+            return granted
+
+        az = authzzie.Authzzie()
+        az.register_authorizer('foo', test_authorizer, {'read', 'write'})
+        az.register_entity_ref_parser('foo', test_id_parser)
+        az.register_scope_normalizer('foo', test_scope_normalizer)
+
+        az.register_type_alias('bar', 'foo')
+        scope = authzzie.Scope('bar', 'entity-01', {'read'})
+        granted = az.get_granted_actions(scope)
+
+        assert granted == {'read'}
+

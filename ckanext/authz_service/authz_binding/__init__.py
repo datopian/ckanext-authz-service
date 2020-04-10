@@ -17,13 +17,13 @@ def default_authz_bindings(authorizer):
                                    actions=org.ORG_ENTITY_CHECKS.keys() + [None])
 
     # Register dataset authz bindings
-    authorizer.register_id_parser('ds', ds.dataset_id_parser)
+    authorizer.register_entity_ref_parser('ds', ds.dataset_id_parser)
     authorizer.register_authorizer('ds', ds.check_dataset_permissions,
                                    actions=ds.DS_ENTITY_CHECKS.keys() + [None],
                                    subscopes=(None, 'data', 'metadata'))
 
     # Register resource authz bindings
-    authorizer.register_id_parser('res', res.resource_id_parser)
+    authorizer.register_entity_ref_parser('res', res.resource_id_parser)
     authorizer.register_authorizer('res', res.check_resource_permissions,
                                    actions=res.RES_ENTITY_CHECKS.keys() + [None],
                                    subscopes=(None, 'data', 'metadata'))

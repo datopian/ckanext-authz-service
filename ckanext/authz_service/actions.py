@@ -30,7 +30,7 @@ def authorize(authorizer, context, data_dict):
     expires = datetime.now(tz=pytz.utc) + timedelta(seconds=lifetime)
 
     try:
-        granted_scopes = map(str, filter(None, (authorizer.check_scope(s) for s in requested_scopes)))
+        granted_scopes = map(str, filter(None, (authorizer.authorize_scope(s) for s in requested_scopes)))
     except UnknownEntityType as e:
         raise toolkit.ValidationError(str(e))
 

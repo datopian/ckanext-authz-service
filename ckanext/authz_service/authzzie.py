@@ -159,13 +159,14 @@ class Authzzie(object):
     def __init__(self):
         self._authorizers = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
         self._scope_normalizers = {}  # type: Dict[Tuple[str, Optional[str]], ScopeNormalizerCallable]
-        self._id_parsers = {}  # type: Dict[str, IdParserCallable]
+        self._ref_parsers = {}  # type: Dict[str, IdParserCallable]
+        self._type_aliases = {}  # type: Dict[str, str]
 
-    def register_id_parser(self, entity_type, function):
+    def register_entity_ref_parser(self, entity_type, function):
         # type: (str, IdParserCallable) -> None
-        """Register an ID parser for an entity type
+        """Register an entity reference parser for an entity type
         """
-        self._id_parsers[entity_type] = function
+        self._ref_parsers[entity_type] = function
 
     def register_authorizer(self, entity_type, function, actions=None, subscopes=None, append=False):
         # type: (str, AuthorizerCallable, Union[Set[str], str, None], Union[Set[str], str, None], bool) -> None
@@ -192,7 +193,17 @@ class Authzzie(object):
         """
         self._scope_normalizers[(entity_type, subscope)] = function
 
-    def check_scope(self, scope):
+    def register_type_alias(self, alias, original):
+        # type: (str, str) -> None
+        """Register a type alias
+
+        Type aliases allow aliasing an existing CKAN entity type (or a custom
+        type added by an extension) with a new name, acceptable by an external
+        service.
+        """
+        self._type_aliases[alias] = original
+
+    def authorize_scope(self, scope):
         # type: (Scope) -> Optional[Scope]
         """Check a requested permission scope and return a granted scope
 
@@ -200,50 +211,69 @@ class Authzzie(object):
         permissions into a scope object. If no permissions are granted, will
         return `None`.
         """
-        permissions = self.get_permissions(scope)
+        permissions = self.get_granted_actions(scope)
         if len(permissions) == 0:
             return None
 
         granted = copy.copy(scope)
         granted.actions = permissions
-        if (scope.entity_type, scope.subscope) in self._scope_normalizers:
-            normalize = self._scope_normalizers[(scope.entity_type, scope.subscope)]
+        entity_type = self._type_aliases.get(scope.entity_type, scope.entity_type)
+        if (entity_type, scope.subscope) in self._scope_normalizers:
+            normalize = self._scope_normalizers[(entity_type, scope.subscope)]
             granted = normalize(scope, granted)
 
         return granted
 
-    def get_permissions(self, scope):
+    def get_granted_actions(self, scope):
         # type: (Scope) -> Set[str]
         """Get list of granted permissions for an entity / ID
         """
-        entity_checks = self._get_auth_checks_for_entity(scope)
+        granted = self._call_authorizers_for_scope(scope)
+
+        for action in granted:
+            k = (scope.entity_type, scope.subscope, action)
+            if k in self._action_aliases:
+                granted.update(self._action_aliases[k])
+
+        if scope.actions:
+            granted = scope.actions.intersection(granted)
+
+        return granted
+
+    def _call_authorizers_for_scope(self, scope):
+        # type: (Scope) -> Set[str]
+        """Calculate granted permissions based on requested scope
+        """
+        entity_checks = self._get_entity_authorizers(scope)
         if scope.actions:
             # Check permissions for each requested action,
-            check_results = [self._check_permission(check, scope.entity_type, scope.entity_ref)
+            check_results = [self._call_authorizer(check, scope.entity_type, scope.entity_ref)
                              for action in scope.actions
                              for check in entity_checks[action]]
         else:
             # Fall back to the default checks
-            check_results = [self._check_permission(check, scope.entity_type, scope.entity_ref)
+            check_results = [self._call_authorizer(check, scope.entity_type, scope.entity_ref)
                              for check in entity_checks[None]]
 
         if len(check_results) == 0:
-            granted = set()
-        elif scope.actions:
-            granted = scope.actions.intersection(*check_results)
-        else:
-            granted = check_results[0].intersection(*check_results[1:])
+            return set()
 
-        return granted
+        return check_results[0].intersection(*check_results[1:])
 
-    def _get_auth_checks_for_entity(self, scope):
+    def _get_entity_authorizers(self, scope):
         # type: (Scope) -> Dict[Optional[str], List[AuthorizerCallable]]
-        """Get the authorization checks matching the requested scope
+        """Get the authorization checks matching the requested entity type and subscope
         """
-        if scope.entity_type not in self._authorizers:
+        if scope.entity_type in self._type_aliases:
+            e_type = self._type_aliases[scope.entity_type]
+        else:
+            e_type = scope.entity_type
+
+        if e_type not in self._authorizers:
             raise UnknownEntityType("Unknown entity type: {}".format(scope.entity_type))
 
-        e_checks = self._authorizers[scope.entity_type]
+        e_checks = self._authorizers[e_type]
+
         if scope.subscope and scope.subscope in e_checks:
             e_checks = e_checks[scope.subscope]
         else:
@@ -251,17 +281,23 @@ class Authzzie(object):
 
         return e_checks
 
-    def _check_permission(self, check, entity_type, entity_ref=None):
+    def _call_authorizer(self, check, entity_type, entity_ref=None):
         # type: (AuthorizerCallable, str, Optional[str]) -> Set[str]
         """Call permission check function for scope and return result
         """
-        if entity_ref and entity_type in self._id_parsers:
-            kwargs = self._id_parsers[entity_type](entity_ref)
-        else:
-            # TODO: the entity ID arg name may need to be different based on check spec
-            kwargs = {"id": entity_ref}
-
+        kwargs = self._parse_entity_ref(entity_type, entity_ref)
         return check(**kwargs)
+
+    def _parse_entity_ref(self, entity_type, entity_ref):
+        # type: (str, Optional[str]) -> Dict[str, Any]
+        """Parse the entity ref and return a dictionary of arguments to pass to the authorizer
+        """
+        entity_type = self._type_aliases.get(entity_type, entity_type)
+        if entity_ref and entity_type in self._ref_parsers:
+            kwargs = self._ref_parsers[entity_type](entity_ref)
+        else:
+            kwargs = {"id": entity_ref}
+        return kwargs
 
 
 def to_iterable(val):
