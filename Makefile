@@ -10,6 +10,9 @@ PIP_COMPILE := pip-compile
 PASTER := paster
 PYTEST := pytest
 
+# The `ckan` command line only exists in newer versions of CKAN
+CKAN_CLI := $(shell which ckan | head -n1)
+
 # Find GNU sed in path (on OS X gsed should be preferred)
 SED := $(shell which gsed sed | head -n1)
 
@@ -43,7 +46,11 @@ $(SENTINELS)/install: requirements.py$(PYTHON_VERSION).txt | $(SENTINELS)
 $(SENTINELS)/develop: $(SENTINELS)/requirements $(SENTINELS)/install $(SENTINELS)/test.ini setup.py | $(SENTINELS)
 	$(PIP) install -r dev-requirements.py$(PYTHON_VERSION).txt
 	$(PIP) install -e .
+ifdef CKAN_CLI
+	$(CKAN_CLI) -c $(TEST_INI_PATH) db init
+else
 	$(PASTER) --plugin=ckan db init -c $(TEST_INI_PATH)
+endif
 	@touch $@
 
 $(SENTINELS)/tests-passed: $(SENTINELS)/develop $(shell find $(PACKAGE_DIR) -type f) .flake8 .isort.cfg | $(SENTINELS)
