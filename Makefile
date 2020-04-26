@@ -7,10 +7,8 @@ SHELL := bash
 PYTHON := python
 PIP := pip
 PIP_COMPILE := pip-compile
-ISORT := isort
-FLAKE8 := flake8
-NOSETESTS := nosetests
 PASTER := paster
+PYTEST := pytest
 
 # Find GNU sed in path (on OS X gsed should be preferred)
 SED := $(shell which gsed sed | head -n1)
@@ -49,23 +47,22 @@ $(SENTINELS)/develop: $(SENTINELS)/requirements $(SENTINELS)/install $(SENTINELS
 	@touch $@
 
 $(SENTINELS)/tests-passed: $(SENTINELS)/develop $(shell find $(PACKAGE_DIR) -type f) .flake8 .isort.cfg | $(SENTINELS)
-	$(ISORT) -rc -df -c $(PACKAGE_DIR)
-	$(FLAKE8) --statistics $(PACKAGE_DIR)
-	$(NOSETESTS) --ckan \
-	      --with-pylons=$(TEST_INI_PATH) \
-          --nologcapture \
-          --with-doctest
+	$(PYTEST) \
+		--flake8 \
+		--isort \
+		--ckan-ini=$(TEST_INI_PATH) \
+		--doctest-modules \
+		$(PACKAGE_DIR)
 	@touch $@
 
 .coverage: $(SENTINELS)/tests-passed $(shell find $(PACKAGE_DIR) -type f) .coveragerc
-	$(NOSETESTS) --ckan \
-	      --with-pylons=$(TEST_INI_PATH) \
-          --nologcapture \
-		  --with-coverage \
-          --cover-package=$(PACKAGE_NAME) \
-          --cover-inclusive \
-          --cover-erase \
-          --cover-tests
+	$(PYTEST) \
+		--flake8 \
+		--isort \
+		--ckan-ini=$(TEST_INI_PATH) \
+		--doctest-modules \
+		--cov=$(PACKAGE_NAME) \
+		$(PACKAGE_DIR)
 
 html-docs:  # $(SENTINELS)/develop
 	cd docs && make html

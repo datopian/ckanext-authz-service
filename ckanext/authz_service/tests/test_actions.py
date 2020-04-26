@@ -1,7 +1,7 @@
 import jwt
+import pytest
 from ckan.plugins import toolkit
 from ckan.tests import factories, helpers
-from nose.tools import assert_equals, assert_raises, assert_true
 
 from . import FunctionalTestBase, temporary_file, user_context
 
@@ -53,18 +53,19 @@ class TestAuthorizeAction(FunctionalTestBase):
                 scopes=scopes)
 
         normalized_scopes = ['org:{}'.format(self.org['name'])]
-        assert_equals(result['requested_scopes'], normalized_scopes)
-        assert_equals(result['granted_scopes'], normalized_scopes)
-        assert_equals(result['user_id'], self.org_admin['name'])
+        assert normalized_scopes == result['requested_scopes']
+        assert normalized_scopes == result['granted_scopes']
+        assert self.org_admin['name'] == result['user_id']
 
     def test_authorize_raises_on_unknown_entity(self):
         """Test that authorize does not accept unknown entity types
         """
         sysadmin = factories.Sysadmin()
         with user_context(sysadmin) as context:
-            assert_raises(toolkit.ValidationError, helpers.call_action,
-                          'authz_authorize', context,
-                          scopes=['spam:*'])
+            with pytest.raises(toolkit.ValidationError):
+                helpers.call_action('authz_authorize',
+                                    context,
+                                    scopes=['spam:*'])
 
 
 class TestPublicKeyAction(FunctionalTestBase):
@@ -76,13 +77,13 @@ class TestPublicKeyAction(FunctionalTestBase):
                 helpers.changed_config('ckanext.authz_service.jwt_public_key_file', pub_key_file):
             result = helpers.call_action('authz_public_key', {})
 
-        assert_equals(result['public_key'], RSA_PUB_KEY)
+        assert RSA_PUB_KEY == result['public_key']
 
     def test_public_key_not_configured_throws(self):
         """Test that when no public key is configured, ObjectNotFound is raised
         """
-        assert_raises(toolkit.ObjectNotFound, helpers.call_action,
-                      'authz_public_key', {})
+        with pytest.raises(toolkit.ObjectNotFound):
+            helpers.call_action('authz_public_key', {})
 
 
 class TestJwtConfig(FunctionalTestBase):
@@ -110,9 +111,9 @@ class TestJwtConfig(FunctionalTestBase):
                 context,
                 scopes=scopes)
 
-        assert_equals(result['user_id'], self.user['name'])
+        assert self.user['name'] == result['user_id']
         jwt_payload = _decode_jwt(result['token'])
-        assert_true(jwt_payload['jti'])
+        assert jwt_payload['jti']
 
     @helpers.change_config('ckanext.authz_service.jwt_include_user_email', True)
     def test_jwt_includes_email(self):
@@ -125,9 +126,9 @@ class TestJwtConfig(FunctionalTestBase):
                 context,
                 scopes=scopes)
 
-        assert_equals(result['user_id'], self.user['name'])
+        assert self.user['name'] == result['user_id']
         jwt_payload = _decode_jwt(result['token'])
-        assert_equals(jwt_payload['email'], self.user['email'])
+        assert self.user['email'] == jwt_payload['email']
 
 
 def _decode_jwt(token):
