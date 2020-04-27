@@ -5,3 +5,4 @@ pytest-flake8==1.0.*
 pytest-isort==0.3.*
 coveralls==1.8.*
 sphinx-autodoc-typehints[type_comments]==1.10.*; python_version >= '3.5'
+git+https://github.com/datopian/pytest-ckan@0.0.10#egg=pytest-ckan
