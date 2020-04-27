@@ -39,7 +39,7 @@ pycparser==2.20           # via cffi
 pyflakes==2.1.1           # via flake8
 pyopenssl==19.1.0         # via urllib3
 pyparsing==2.4.7          # via packaging
-git+https://github.com/datopian/pytest-ckan@0.0.10#egg=pytest-ckan  # via -r dev-requirements.in
+git+https://github.com/datopian/pytest-ckan#egg=pytest-ckan  # via -r dev-requirements.in
 pytest-cov==2.8.1         # via -r dev-requirements.in
 pytest-flake8==1.0.5      # via -r dev-requirements.in
 pytest-isort==0.3.1       # via -r dev-requirements.in
