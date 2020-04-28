@@ -23,7 +23,7 @@ install:
   - bash bin/travis-build.bash
   - pip install coveralls
 
-script: make test coverage CKAN_PATH=./ckan
+script: make coverage CKAN_PATH=./ckan
 
 after_success:
   - coveralls
