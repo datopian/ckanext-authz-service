@@ -1,8 +1,8 @@
 pip-tools==4.5.*
 pytest==4.6.*
+pytest-ckan==0.0.*
 pytest-cov==2.8.*
 pytest-flake8==1.0.*
 pytest-isort==0.3.*
 coveralls==1.8.*
 sphinx-autodoc-typehints[type_comments]==1.10.*; python_version >= '3.5'
-git+https://github.com/datopian/pytest-ckan#egg=pytest-ckan

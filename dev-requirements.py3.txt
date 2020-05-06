@@ -33,7 +33,7 @@ pycodestyle==2.5.0        # via flake8
 pyflakes==2.1.1           # via flake8
 pygments==2.6.1           # via sphinx
 pyparsing==2.4.7          # via packaging
-git+https://github.com/datopian/pytest-ckan#egg=pytest-ckan  # via -r dev-requirements.in
+pytest-ckan==0.0.12       # via -r dev-requirements.in
 pytest-cov==2.8.1         # via -r dev-requirements.in
 pytest-flake8==1.0.5      # via -r dev-requirements.in
 pytest-isort==0.3.1       # via -r dev-requirements.in
