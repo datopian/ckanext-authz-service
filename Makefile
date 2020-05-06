@@ -52,7 +52,9 @@ CKAN_CONFIG_VALUES := \
 CKAN_TEST_CONFIG_VALUES := \
 		sqlalchemy.url=postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@localhost/$(POSTGRES_DB)_test \
 		ckan.datastore.write_url=postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@localhost/$(DATASTORE_DB_NAME)_test \
-		ckan.datastore.read_url=postgresql://$(DATASTORE_DB_RO_USER):$(DATASTORE_DB_RO_PASSWORD)@localhost/$(DATASTORE_DB_NAME)_test
+		ckan.datastore.read_url=postgresql://$(DATASTORE_DB_RO_USER):$(DATASTORE_DB_RO_PASSWORD)@localhost/$(DATASTORE_DB_NAME)_test \
+		ckanext.authz_service.jwt_algorithm=none \
+		ckanext.authz_service.jwt_private_key=
 
 ifdef WITH_COVERAGE
   COVERAGE_ARG := --cov=$(PACKAGE_NAME)
