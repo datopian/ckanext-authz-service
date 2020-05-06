@@ -1,7 +1,6 @@
 """Tests for the Authzzie permission mapping library
 """
 import pytest
-from nose.tools import assert_equals
 from six import iteritems
 
 from ckanext.authz_service import authzzie
@@ -92,7 +91,7 @@ def test_action_aliases():
 
     scope = authzzie.Scope('foo', 'entity-01', {'look-at-things'})
     granted = az.authorize_scope(scope)
-    assert_equals(str(granted), 'foo:entity-01:look-at-things')
+    assert 'foo:entity-01:look-at-things' == str(granted)
 
 
 def test_action_aliases_with_type_alias():
@@ -107,4 +106,4 @@ def test_action_aliases_with_type_alias():
 
     scope = authzzie.Scope('bar', 'entity-01', {'look-at-things'})
     granted = az.authorize_scope(scope)
-    assert_equals(str(granted), 'bar:entity-01:look-at-things')
+    assert 'bar:entity-01:look-at-things' == str(granted)
