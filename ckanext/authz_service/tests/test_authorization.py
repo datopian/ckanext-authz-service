@@ -3,10 +3,10 @@ from ckan.tests import factories, helpers
 from ckanext.authz_service.authzzie import Scope
 from ckanext.authz_service.plugin import init_authorizer
 
-from . import FunctionalTestBase, user_context
+from . import user_context
 
 
-class TestDatasetAuthBinding(FunctionalTestBase):
+class TestDatasetAuthBinding(helpers.FunctionalTestBase):
     """Test cases for the default authorization binding defined in the extension
     for datasets
     """
@@ -84,7 +84,7 @@ class TestDatasetAuthBinding(FunctionalTestBase):
         assert granted == {'create', 'list'}
 
 
-class TestResourceAuthBinding(FunctionalTestBase):
+class TestResourceAuthBinding(helpers.FunctionalTestBase):
     """Test cases for the default authorization binding defined in the extension
     for resources
     """
@@ -151,7 +151,7 @@ class TestResourceAuthBinding(FunctionalTestBase):
         assert granted == set()
 
 
-class TestOrganizationAuthBinding(FunctionalTestBase):
+class TestOrganizationAuthBinding(helpers.FunctionalTestBase):
     """Test cases for the default authorization binding defined in the extension
     for resources
     """

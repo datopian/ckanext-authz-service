@@ -10,12 +10,12 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
 setup(
-    name='''ckanext-authz-service''',
+    name='ckanext-authz-service',
 
     # Versions should comply with PEP440.  For a discussion on single-sourcing
     # the version across setup.py and the project code, see
     # http://packaging.python.org/en/latest/tutorial.html#version
-    version='0.1.1',
+    version='0.1.2',
 
     description='''Add CKAN API to generate JWT tokens with authorization information''',
     long_description=long_description,
@@ -25,8 +25,8 @@ setup(
     url='https://github.com/datopian/ckanext-authz-service',
 
     # Author details
-    author='''Shahar Evron''',
-    author_email='''shahar.evron@datopian.com''',
+    author='Shahar Evron',
+    author_email='shahar.evron@datopian.com',
 
     # Choose your license
     license='MIT',
@@ -50,7 +50,7 @@ setup(
 
 
     # What does your project relate to?
-    keywords='''CKAN authorization jwt authz microservices integration''',
+    keywords='CKAN authorization jwt authz microservices integration',
 
     # You can just specify the packages manually here if your project is
     # simple. Or you can use find_packages().

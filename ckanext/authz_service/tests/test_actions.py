@@ -2,8 +2,9 @@ import jwt
 import pytest
 from ckan.plugins import toolkit
 from ckan.tests import factories, helpers
+from ckan.tests.helpers import FunctionalTestBase
 
-from . import FunctionalTestBase, temporary_file, user_context
+from . import temporary_file, user_context
 
 # RSA public key for testing purposes
 RSA_PUB_KEY = """

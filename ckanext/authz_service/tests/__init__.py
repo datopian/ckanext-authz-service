@@ -2,13 +2,7 @@ from contextlib import contextmanager
 from typing import Any, Dict
 
 from ckan import model
-from ckan.tests import helpers
 from mock import patch
-
-
-class FunctionalTestBase(helpers.FunctionalTestBase):
-
-    _load_plugins = ['authz_service']
 
 
 @contextmanager
