@@ -2,7 +2,7 @@ from functools import partial
 
 import ckan.plugins as plugins
 
-from ckanext.authz_service import actions
+from ckanext.authz_service import actions, blueprints
 from ckanext.authz_service.authz_binding import default_authz_bindings
 from ckanext.authz_service.authzzie import Authzzie
 from ckanext.authz_service.interfaces import IAuthorizationBindings
@@ -10,6 +10,7 @@ from ckanext.authz_service.interfaces import IAuthorizationBindings
 
 class AuthzServicePlugin(plugins.SingletonPlugin):
     plugins.implements(plugins.IActions)
+    plugins.implements(plugins.IBlueprint)
     plugins.implements(IAuthorizationBindings)
 
     # IActions
@@ -19,6 +20,12 @@ class AuthzServicePlugin(plugins.SingletonPlugin):
         return {'authz_authorize': partial(actions.authorize, authorizer),
                 'authz_verify': actions.verify,
                 'authz_public_key': actions.public_key}
+
+    # IBlueprint
+    def get_blueprint(self):
+        return blueprints.blueprint
+
+    # IAuthorizationBindings
 
     def register_authz_bindings(self, authorizer):
         default_authz_bindings(authorizer)
