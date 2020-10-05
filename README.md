@@ -120,6 +120,18 @@ having it pre-configured.
 }
 ```
 
+### Downloading the Public Key via direct URL
+The public key, if configured, is also available to download directly by clients
+at:
+
+    https://your.ckan.installation/authz/public_key
+
+Sending a GET request to this URL will let you download the key in PEM format without
+the JSON response wrapper of the CKAN API. This may be more convenient in most cases. 
+
+If no public key is configured (e.g. CKAN is using a symmetric algorithm to sign JWT
+tokens), hitting this URL should return an `HTTP 204` response with no content.  
+
 Authorization Scopes
 --------------------
 "Scopes" in the context of `authz-service` represent permission to perform one
