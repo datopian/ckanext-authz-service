@@ -3,7 +3,7 @@ from ckan.tests import factories, helpers
 from ckanext.authz_service.authzzie import Scope
 from ckanext.authz_service.plugin import init_authorizer
 
-from . import user_context
+from . import ANONYMOUS_USER, user_context
 
 
 class TestDatasetAuthBinding(helpers.FunctionalTestBase):
@@ -147,6 +147,31 @@ class TestResourceAuthBinding(helpers.FunctionalTestBase):
         user = factories.User()
         scope = Scope('res', '{}/{}/*'.format(self.org['name'], self.dataset['name']), ['update', 'patch', 'delete'])
         with user_context(user):
+            granted = self.az.get_granted_actions(scope)
+        assert granted == set()
+
+    def test_anon_user_can_read_public_resources(self):
+        """Test that an anonymous user gets 'read' authorized for public resources
+        """
+        scope = Scope('res', '{}/{}/*'.format(self.org['name'], self.dataset['name']), ['read'])
+        with user_context(ANONYMOUS_USER):
+            granted = self.az.get_granted_actions(scope)
+        assert granted == {'read'}
+
+    def test_anon_user_cannot_write_public_resources(self):
+        """Test that an anonymous user does not get 'write' authorized for public resources
+        """
+        scope = Scope('res', '{}/{}/*'.format(self.org['name'], self.dataset['name']), ['write'])
+        with user_context(ANONYMOUS_USER):
+            granted = self.az.get_granted_actions(scope)
+        assert granted == set()
+
+    def test_anon_user_cannot_read_private_resources(self):
+        """Test that an anonymous user is denied 'read' for private resources
+        """
+        ds = factories.Dataset(owner_org=self.org['id'], private=True)
+        scope = Scope('res', '{}/{}/*'.format(self.org['name'], ds['name']), ['read'])
+        with user_context(ANONYMOUS_USER):
             granted = self.az.get_granted_actions(scope)
         assert granted == set()
 

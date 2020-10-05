@@ -3,10 +3,11 @@
 import random
 import string
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional
+from typing import List, Optional
 
 import jwt
 import pytz
+from ckan.model.user import User
 from ckan.plugins import toolkit
 from six import string_types
 from six.moves import range
@@ -35,7 +36,7 @@ def authorize(authorizer, context, data_dict):
         raise toolkit.ValidationError(str(e))
 
     user = context.get('auth_user_obj')
-    return {"user_id": user.name,
+    return {"user_id": user.name if user else None,
             "token": _create_token(user, granted_scopes, expires),
             "expires_at": expires.isoformat(),
             "requested_scopes": [str(s) for s in requested_scopes],
@@ -91,7 +92,7 @@ def public_key(*_, **__):
 
 
 def _create_token(user, scopes, expires):
-    # type: (Dict, List[Scope], datetime) -> str
+    # type: (Optional[User], List[Scope], datetime) -> str
     """Create a JWT token
     """
     jwt_algorithm = util.get_config('jwt_algorithm', 'RS256')
@@ -100,9 +101,9 @@ def _create_token(user, scopes, expires):
 
     payload = {"exp": expires,
                "nbf": datetime.now(tz=pytz.utc),
-               "sub": user.name,
+               "sub": user.name if user else None,
                "iss": issuer,
-               "name": user.fullname,
+               "name": user.fullname if user else None,
                "scopes": ' '.join(scopes)}
 
     audience = util.get_config('jwt_audience')
@@ -110,7 +111,7 @@ def _create_token(user, scopes, expires):
         payload['aud'] = audience
 
     if util.get_config_bool('jwt_include_user_email', False):
-        payload['email'] = user.email
+        payload['email'] = user.email if user else None
 
     if util.get_config_bool('jwt_include_token_id', False):
         payload['jti'] = _generate_jti()

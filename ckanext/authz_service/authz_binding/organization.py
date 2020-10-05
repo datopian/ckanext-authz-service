@@ -1,6 +1,6 @@
 """Authorization bindings for organizations
 """
-from typing import Optional, Set
+from typing import Set
 
 from ..authzzie import Scope
 from .common import check_entity_permissions, ckan_auth_check, ckan_is_sysadmin
@@ -15,7 +15,7 @@ ORG_ENTITY_CHECKS = {"read": "organization_show",
 
 
 def check_org_permissions(id):
-    # type: (str, Optional[str]) -> Set[str]
+    # type: (str) -> Set[str]
     """Check what org permissions a user has
     """
     if ckan_is_sysadmin():
@@ -33,7 +33,6 @@ def check_org_permissions(id):
 
         if ckan_auth_check('organization_create'):
             granted.add('create')
-
     else:
         granted.update(check_entity_permissions(ORG_ENTITY_CHECKS, {"id": id}))
 

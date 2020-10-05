@@ -1,27 +1,32 @@
 from contextlib import contextmanager
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from ckan import model
 from mock import patch
 
+ANONYMOUS_USER = None
+
 
 @contextmanager
-def user_context(user):
-    # type: (Dict[str, Any]) -> Dict[str, Any]
+def user_context(user, ignore_auth=False):
+    # type: (Optional[Dict[str, Any]], bool) -> Dict[str, Any]
     """Context manager that creates a CKAN context dict for a user, then
     both patches our `get_user_context` function to return it and also
     yields the context for use inside tests
     """
-    userobj = model.User.get(user['name'])
     context = {"model": model,
-               "user": user['name'],
-               "auth_user_obj": userobj,
-               "userobj": userobj}
+               "ignore_auth": ignore_auth,
+               "user": None,
+               "auth_user_obj": None,
+               "userobj": None}
 
-    def mock_context():
-        return context
+    if user is not ANONYMOUS_USER:
+        userobj = model.User.get(user['name'])
+        context.update({"user": user['name'],
+                        "auth_user_obj": userobj,
+                        "userobj": userobj})
 
-    with patch('ckanext.authz_service.authz_binding.common.get_user_context', mock_context):
+    with patch('ckanext.authz_service.authz_binding.common.get_user_context', lambda: context):
         yield context
 
 

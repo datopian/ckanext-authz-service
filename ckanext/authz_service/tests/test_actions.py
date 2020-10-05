@@ -4,7 +4,7 @@ from ckan.plugins import toolkit
 from ckan.tests import factories, helpers
 from ckan.tests.helpers import FunctionalTestBase
 
-from . import temporary_file, user_context
+from . import ANONYMOUS_USER, temporary_file, user_context
 
 # RSA public key for testing purposes
 RSA_PUB_KEY = ("-----BEGIN PUBLIC KEY-----\n"
@@ -51,9 +51,8 @@ class TestAuthorizeAction(FunctionalTestBase):
                 context,
                 scopes=scopes)
 
-        normalized_scopes = ['org:{}'.format(self.org['name'])]
-        assert normalized_scopes == result['requested_scopes']
-        assert normalized_scopes == result['granted_scopes']
+        assert ['org:{}'.format(self.org['name'])] == result['requested_scopes']
+        assert ['org:{}:delete,patch,read,update'.format(self.org['name'])] == result['granted_scopes']
         assert self.org_admin['name'] == result['user_id']
 
     def test_authorize_raises_on_unknown_entity(self):
@@ -65,6 +64,51 @@ class TestAuthorizeAction(FunctionalTestBase):
                 helpers.call_action('authz_authorize',
                                     context,
                                     scopes=['spam:*'])
+
+    def test_authorize_request_resource_read_anon_user(self):
+        """Test that anonymous users can request to read a public resource
+        """
+        ds = factories.Dataset(owner_org=self.org['id'])
+        scopes = ['res:{}/{}/*:read'.format(self.org['name'], ds['name'])]
+        with user_context(ANONYMOUS_USER) as context:
+            result = helpers.call_action(
+                'authz_authorize',
+                context,
+                scopes=scopes)
+
+        assert scopes == result['requested_scopes']
+        assert scopes == result['granted_scopes']
+        assert result['user_id'] is None
+
+    def test_authorize_request_private_resource_read_anon_user(self):
+        """Test that anonymous users are denied read access to private resources
+        """
+        ds = factories.Dataset(owner_org=self.org['id'], private=True)
+        scopes = ['res:{}/{}/*:read'.format(self.org['name'], ds['name'])]
+        with user_context(ANONYMOUS_USER) as context:
+            result = helpers.call_action(
+                'authz_authorize',
+                context,
+                scopes=scopes)
+
+        assert scopes == result['requested_scopes']
+        assert [] == result['granted_scopes']
+        assert result['user_id'] is None
+
+    def test_authorize_request_resource_write_anon_user(self):
+        """Test that anonymous users are denied write access to public resources
+        """
+        ds = factories.Dataset(owner_org=self.org['id'])
+        scopes = ['res:{}/{}/*:write'.format(self.org['name'], ds['name'])]
+        with user_context(ANONYMOUS_USER) as context:
+            result = helpers.call_action(
+                'authz_authorize',
+                context,
+                scopes=scopes)
+
+        assert scopes == result['requested_scopes']
+        assert [] == result['granted_scopes']
+        assert result['user_id'] is None
 
 
 class TestPublicKeyAction(FunctionalTestBase):
