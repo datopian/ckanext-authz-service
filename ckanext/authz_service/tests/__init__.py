@@ -8,13 +8,14 @@ ANONYMOUS_USER = None
 
 
 @contextmanager
-def user_context(user):
-    # type: (Optional[Dict[str, Any]]) -> Dict[str, Any]
+def user_context(user, ignore_auth=False):
+    # type: (Optional[Dict[str, Any]], bool) -> Dict[str, Any]
     """Context manager that creates a CKAN context dict for a user, then
     both patches our `get_user_context` function to return it and also
     yields the context for use inside tests
     """
     context = {"model": model,
+               "ignore_auth": ignore_auth,
                "user": None,
                "auth_user_obj": None,
                "userobj": None}
