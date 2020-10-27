@@ -5,7 +5,7 @@
 #    pip-compile --no-index --output-file=requirements.txt requirements.in
 #
 cffi==1.14.0              # via cryptography
-cryptography==2.8         # via pyjwt
+cryptography==3.2         # via pyjwt
 pycparser==2.20           # via cffi
 pyjwt[crypto]==1.7.1      # via -r requirements.in
 pytz==2019.3              # via -r requirements.in
