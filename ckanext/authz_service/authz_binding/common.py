@@ -38,7 +38,9 @@ def ckan_get_user_role_in_group(group_id):
     # tyope: (str) -> Optional[str]
     """Get the current user's role in a group / organization
     """
-    user = get_user_context()['user']
+    user = get_user_context().get('user')
+    if not user:
+        return None
     return users_role_for_group_or_org(group_id, user)
 
 
@@ -46,7 +48,7 @@ def ckan_is_sysadmin():
     # type: () -> bool
     """Tell if the current user is a CKAN sysadmin
     """
-    user = get_user_context()['user']
+    user = get_user_context().get('user')
     return is_sysadmin(user)
 
 
@@ -59,4 +61,9 @@ def get_user_context():
     call this. This allows tests to patch this function to set the current
     user.
     """
-    return dict(model=model, user=g.user, auth_user_obj=g.userobj)
+    context = dict(model=model)
+    if hasattr(g, 'user'):
+        context['user'] = g.user
+    if hasattr(g, 'userobj'):
+        context['auth_user_obj'] = g.userobj
+    return context
