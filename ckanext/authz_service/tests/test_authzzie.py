@@ -65,8 +65,8 @@ def test_type_aliases():
     def test_id_parser(id):
         return {"id": id}
 
-    def test_scope_normalizer(_, granted):
-        return granted
+    def test_scope_normalizer(_, in_scope):
+        return in_scope
 
     az = authzzie.Authzzie()
     az.register_authorizer('foo', test_authorizer, {'read', 'write'})
