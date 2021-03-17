@@ -1,6 +1,6 @@
 ckanext-authz-service
 =====================
-![Tests](https://github.com/datopian/ckanext-authz-service/workflows/tests/badge.svg?branch=master)
+![Tests](https://github.com/datopian/ckanext-authz-service/workflows/test/badge.svg?branch=master)
 [![Coverage Status](https://coveralls.io/repos/github/datopian/ckanext-authz-service/badge.svg?branch=master)](https://coveralls.io/github/datopian/ckanext-authz-service?branch=master)
 
 **JSON Web Tokens (JWT) Based Authorization API for CKAN**
