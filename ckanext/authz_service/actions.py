@@ -148,4 +148,4 @@ def _generate_jti(length=8):
     # type: (int) -> bytes
     """Generate a unique token ID
     """
-    return b''.join(random.choice(string.printable) for _ in range(length))
+    return ''.join(random.choice(string.printable) for _ in range(length))
