@@ -2,7 +2,6 @@ import jwt
 import pytest
 from ckan.plugins import toolkit
 from ckan.tests import factories, helpers
-from ckan.tests.helpers import FunctionalTestBase
 
 from . import ANONYMOUS_USER, temporary_file, user_context
 
@@ -22,16 +21,13 @@ RSA_PUB_KEY = ("-----BEGIN PUBLIC KEY-----\n"
                "ZK4b9J6UQSKjmNaLu8EuVi8CAwEAAQ==\n"
                "-----END PUBLIC KEY-----")
 
-
-class TestAuthorizeAction(FunctionalTestBase):
+@pytest.mark.usefixtures('clean_db', 'with_plugins')
+class TestAuthorizeAction():
     """Test cases for the default authorization binding defined in the extension
     for datasets
     """
 
     def setup(self):
-
-        super(TestAuthorizeAction, self).setup()
-
         self.org_admin = factories.User()
         self.org_member = factories.User()
         self.org = factories.Organization(
@@ -111,7 +107,8 @@ class TestAuthorizeAction(FunctionalTestBase):
         assert result['user_id'] is None
 
 
-class TestPublicKeyAction(FunctionalTestBase):
+@pytest.mark.usefixtures('with_plugins')
+class TestPublicKeyAction():
 
     def test_public_key_is_available(self):
         """Test that public key is returned properly
@@ -129,13 +126,12 @@ class TestPublicKeyAction(FunctionalTestBase):
             helpers.call_action('authz_public_key', {})
 
 
-class TestJwtConfig(FunctionalTestBase):
+@pytest.mark.usefixtures('clean_db', 'with_plugins')
+class TestJwtConfig():
     """Various tests that verify the effect of JWT configuration on actions
     """
 
     def setup(self):
-        super(TestJwtConfig, self).setup()
-
         self.user = factories.User(email='some-user@example.com')
         self.org = factories.Organization(
             users=[
