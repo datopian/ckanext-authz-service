@@ -110,6 +110,9 @@ class TestAuthorizeAction():
 @pytest.mark.usefixtures('with_plugins')
 class TestPublicKeyAction():
 
+    @pytest.mark.skipif(
+        toolkit.check_ckan_version(min_version='2.9'),
+        reason='Test fixture not supported in Python 3')
     def test_public_key_is_available(self):
         """Test that public key is returned properly
         """

@@ -1,6 +1,6 @@
 ckanext-authz-service
 =====================
-![Tests](https://github.com/datopian/ckanext-authz-service/workflows/tests/badge.svg?branch=master)
+![Tests](https://github.com/datopian/ckanext-authz-service/workflows/test/badge.svg?branch=master)
 [![Coverage Status](https://coveralls.io/repos/github/datopian/ckanext-authz-service/badge.svg?branch=master)](https://coveralls.io/github/datopian/ckanext-authz-service?branch=master)
 
 **JSON Web Tokens (JWT) Based Authorization API for CKAN**
@@ -23,9 +23,7 @@ determine a user's access level, or define custom entity types to support.
 Requirements
 ------------
 
-This extension works with CKAN 2.8.x.
-
-It may work, but has not been tested, with other CKAN versions.
+This extension works with CKAN 2.8.x and CKAN 2.9.x with both Python 2 and 3.
 
 
 Installation
