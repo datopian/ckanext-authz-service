@@ -214,15 +214,15 @@ class Authzzie(object):
         """
         self._action_aliases[(entity_type, subscope, alias)] = original
 
-    def authorize_scope(self, scope):
-        # type: (Scope) -> Optional[Scope]
+    def authorize_scope(self, scope, **kwargs):
+        # type: (Scope, Any) -> Optional[Scope]
         """Check a requested permission scope and return a granted scope
 
         This is a wrapper around `get_permissions` that normalizes granted
         permissions into a scope object. If no permissions are granted, will
         return `None`.
         """
-        granted_actions = self.get_granted_actions(scope)
+        granted_actions = self.get_granted_actions(scope, **kwargs)
         if len(granted_actions) == 0:
             return None
 
@@ -235,18 +235,18 @@ class Authzzie(object):
 
         return granted
 
-    def get_granted_actions(self, scope):
-        # type: (Scope) -> Set[str]
+    def get_granted_actions(self, scope, **kwargs):
+        # type: (Scope, Any) -> Set[str]
         """Get list of granted permissions for an entity / ID
         """
-        granted = self._call_authorizers_for_scope(scope)
+        granted = self._call_authorizers_for_scope(scope, **kwargs)
         if scope.actions:
             granted = scope.actions.intersection(granted)
 
         return granted
 
-    def _call_authorizers_for_scope(self, scope):
-        # type: (Scope) -> Set[str]
+    def _call_authorizers_for_scope(self, scope, **kwargs):
+        # type: (Scope, Any) -> Set[str]
         """Calculate granted permissions based on requested scope
 
         This also handles action aliases
@@ -255,12 +255,12 @@ class Authzzie(object):
         action_map = self._get_action_map(scope)
         if scope.actions:
             # Check permissions for each requested action
-            check_results = [self._call_authorizer(check, scope.entity_type, scope.entity_ref)
+            check_results = [self._call_authorizer(check, scope.entity_type, scope.entity_ref, **kwargs)
                              for action in action_map.keys()
                              for check in entity_checks[action]]
         else:
             # Fall back to the default checks
-            check_results = [self._call_authorizer(check, scope.entity_type, scope.entity_ref)
+            check_results = [self._call_authorizer(check, scope.entity_type, scope.entity_ref, **kwargs)
                              for check in entity_checks[None]]
 
         if len(check_results) == 0:
@@ -312,11 +312,11 @@ class Authzzie(object):
 
         return e_checks
 
-    def _call_authorizer(self, check, entity_type, entity_ref=None):
-        # type: (AuthorizerCallable, str, Optional[str]) -> Set[str]
+    def _call_authorizer(self, check, entity_type, entity_ref=None, **kwargs):
+        # type: (AuthorizerCallable, str, Optional[str], Any) -> Set[str]
         """Call permission check function for scope and return result
         """
-        kwargs = self._parse_entity_ref(entity_type, entity_ref)
+        kwargs.update(self._parse_entity_ref(entity_type, entity_ref))
         return check(**kwargs)
 
     def _parse_entity_ref(self, entity_type, entity_ref):

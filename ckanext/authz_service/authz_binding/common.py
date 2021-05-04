@@ -6,6 +6,8 @@ from ckan.common import g
 from ckan.plugins import toolkit
 from six import iteritems
 
+OptionalCkanContext = Optional[Dict[str, Any]]
+
 
 def normalize_id_part(id_part):
     # type: (str) -> Optional[str]
@@ -23,12 +25,15 @@ def check_entity_permissions(permission_checks, data_dict=None):
     return set(granted)
 
 
-def ckan_auth_check(permission, data_dict=None):
-    # type: (str, Dict[str, Any]) -> bool
+def ckan_auth_check(permission, data_dict=None, context=None):
+    # type: (str, Dict[str, Any], OptionalCkanContext) -> bool
     """Wrapper for CKAN permission check
     """
+    if context is None:
+        context = get_user_context()
+
     try:
-        toolkit.check_access(permission, get_user_context(), data_dict=data_dict)
+        toolkit.check_access(permission, context=context, data_dict=data_dict)
     except (toolkit.NotAuthorized, toolkit.ObjectNotFound):
         return False
     return True
