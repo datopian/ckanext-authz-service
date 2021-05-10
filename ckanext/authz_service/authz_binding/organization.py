@@ -18,7 +18,7 @@ def check_org_permissions(id, context=None):
     # type: (str, OptionalCkanContext) -> Set[str]
     """Check what org permissions a user has
     """
-    if ckan_is_sysadmin():
+    if ckan_is_sysadmin(context=context):
         # Sysadmins can do anything, including "any entity" actions
         return set(ORG_ENTITY_CHECKS.keys())
     elif id == '*':

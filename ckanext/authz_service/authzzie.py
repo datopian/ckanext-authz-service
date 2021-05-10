@@ -20,7 +20,7 @@ class AuthorizerCallable(Protocol):
     """Type declaration for authentication check callable
     """
     def __call__(self, **kwargs):
-        # type: (**str) -> Set[str]
+        # type: (**Any) -> Set[str]
         raise NotImplementedError('You should not be instantiating this')
 
 
@@ -218,9 +218,12 @@ class Authzzie(object):
         # type: (Scope, Any) -> Optional[Scope]
         """Check a requested permission scope and return a granted scope
 
-        This is a wrapper around `get_permissions` that normalizes granted
+        This is a wrapper around `get_granted_actions` that normalizes granted
         permissions into a scope object. If no permissions are granted, will
         return `None`.
+
+        Any additional parameters passed as `**kwargs` will be passed on down the
+        stack to authorizer callbacks.
         """
         granted_actions = self.get_granted_actions(scope, **kwargs)
         if len(granted_actions) == 0:
