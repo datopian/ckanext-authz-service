@@ -10,9 +10,6 @@ from . import temporary_file
 from .test_actions import RSA_PUB_KEY
 
 
-@pytest.mark.skipif(
-    toolkit.check_ckan_version(min_version='2.9'),
-    reason='Test fixture not supported in Python 3')
 def test_get_public_key(app):
     url = toolkit.url_for('authz_service.public_key')
     with temporary_file(RSA_PUB_KEY) as pub_key_file, \
