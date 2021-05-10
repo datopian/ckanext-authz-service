@@ -121,26 +121,26 @@ def _create_token(user, scopes, expires):
 
 
 def _get_public_key():
-    # type: () -> Optional[str]
+    # type: () -> Optional[bytes]
     """Get the configured public key from file
     """
     pub_key_file = util.get_config('jwt_public_key_file', None)
     if pub_key_file is None:
         return None
 
-    with open(pub_key_file, 'r') as f:
-        return bytes(f.read())
+    with open(pub_key_file, 'rb') as f:
+        return f.read()
 
 
 def _get_private_key():
-    # type: () -> Optional[str]
+    # type: () -> Optional[bytes]
     """Get the configured private key from file or string
     """
-    private_key = util.get_config('jwt_private_key', None)
+    private_key = util.get_config('jwt_private_key', None).encode('ascii')
     if not private_key:
         private_key_file = util.get_config('jwt_private_key_file')
         if private_key_file:
-            with open(private_key_file, 'r') as f:
+            with open(private_key_file, 'rb') as f:
                 private_key = f.read()
     return private_key
 

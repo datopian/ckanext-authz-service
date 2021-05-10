@@ -2,7 +2,6 @@
 
 This is mainly for testing blueprints
 """
-import pytest
 from ckan.plugins import toolkit
 from ckan.tests import helpers
 
