@@ -16,7 +16,7 @@ def test_get_public_key(app):
         response = app.get(url, status=200)
 
     assert response.headers['content-type'] == 'application/x-pem-file'
-    assert response.body == RSA_PUB_KEY
+    assert response.body == RSA_PUB_KEY.decode('ascii')
 
 
 def test_get_public_key_no_key_configured(app):
