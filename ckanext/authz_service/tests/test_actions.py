@@ -7,20 +7,22 @@ from ckan.tests.helpers import FunctionalTestBase
 from . import ANONYMOUS_USER, temporary_file, user_context
 
 # RSA public key for testing purposes
-RSA_PUB_KEY = ("-----BEGIN PUBLIC KEY-----\n"
-               "MIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAwa1W4fb4CgFH5EXsLlJI\n"
-               "Vr+r2ZB17hR4mXNhJhj4hXm4UQlC6Rnjc1MJ1fse3ClkaD5GFbGfwnDr2iXMaoBo\n"
-               "v2F1mZR4TG/5muIEUEwUg2t5z/CBfYMIGG3Fucg9Et2rmc2MQPCPnN5H8XvzCgE4\n"
-               "Wa662tMtGZmM1FtKtMVEM3MRo4rHNS4wcl+SPoKLgAOgWQtIMVy0AYyldRfBVG3+\n"
-               "vrB4Y++leN8DZZrLYALL93WmMiaZE9Al8rndTte5gIaLJ2cnHXL8KEw6JPBXwP92\n"
-               "QEIzFlh0Nbt0FSRnX9wrJovJikTeMWD75zevGP5I4Oag0oiARVh5iZHNsEYki2dC\n"
-               "XOX01Eqh2ZXwuqOUon5RAaJesdbGz5M6G1zY5CTZ7tzgiDkl1vl0PC12J8XmfTda\n"
-               "pg8OxHi9EI8caqIqATaExSMFSFs+OxEog8vv+DifQfVzCxyGiOkw81NRPw46Qylf\n"
-               "UBaeSYhylc2KRLuMRfVLT5HMLzG7QJ0jinkaUKGJznCzEqynxa187Ar1Z+SDZ07g\n"
-               "q54mfdM9B6eS/SEbJhFI9oRFv9BSlo8YXfzLHOdXwrmWZDZmzTKfAtQKY9luSfrL\n"
-               "8Fe0+w4kGtQ5PLXEe7NWCSS9oXnVAs7/cNxqaKNHF8gj39iBvJdyVdqsMHtXdyvz\n"
-               "ZK4b9J6UQSKjmNaLu8EuVi8CAwEAAQ==\n"
-               "-----END PUBLIC KEY-----")
+RSA_PUB_KEY = bytes(
+    "-----BEGIN PUBLIC KEY-----\n"
+    "MIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAwa1W4fb4CgFH5EXsLlJI\n"
+    "Vr+r2ZB17hR4mXNhJhj4hXm4UQlC6Rnjc1MJ1fse3ClkaD5GFbGfwnDr2iXMaoBo\n"
+    "v2F1mZR4TG/5muIEUEwUg2t5z/CBfYMIGG3Fucg9Et2rmc2MQPCPnN5H8XvzCgE4\n"
+    "Wa662tMtGZmM1FtKtMVEM3MRo4rHNS4wcl+SPoKLgAOgWQtIMVy0AYyldRfBVG3+\n"
+    "vrB4Y++leN8DZZrLYALL93WmMiaZE9Al8rndTte5gIaLJ2cnHXL8KEw6JPBXwP92\n"
+    "QEIzFlh0Nbt0FSRnX9wrJovJikTeMWD75zevGP5I4Oag0oiARVh5iZHNsEYki2dC\n"
+    "XOX01Eqh2ZXwuqOUon5RAaJesdbGz5M6G1zY5CTZ7tzgiDkl1vl0PC12J8XmfTda\n"
+    "pg8OxHi9EI8caqIqATaExSMFSFs+OxEog8vv+DifQfVzCxyGiOkw81NRPw46Qylf\n"
+    "UBaeSYhylc2KRLuMRfVLT5HMLzG7QJ0jinkaUKGJznCzEqynxa187Ar1Z+SDZ07g\n"
+    "q54mfdM9B6eS/SEbJhFI9oRFv9BSlo8YXfzLHOdXwrmWZDZmzTKfAtQKY9luSfrL\n"
+    "8Fe0+w4kGtQ5PLXEe7NWCSS9oXnVAs7/cNxqaKNHF8gj39iBvJdyVdqsMHtXdyvz\n"
+    "ZK4b9J6UQSKjmNaLu8EuVi8CAwEAAQ==\n"
+    "-----END PUBLIC KEY-----"
+)
 
 
 class TestAuthorizeAction(FunctionalTestBase):
