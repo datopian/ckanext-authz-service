@@ -1,3 +1,5 @@
+import pytest
+
 from ckan.tests import factories, helpers
 
 from ckanext.authz_service.authzzie import Scope
@@ -5,16 +7,13 @@ from ckanext.authz_service.plugin import init_authorizer
 
 from . import ANONYMOUS_USER, user_context
 
-
-class TestDatasetAuthBinding(helpers.FunctionalTestBase):
+@pytest.mark.usefixtures('clean_db', 'with_plugins')
+class TestDatasetAuthBinding(object):
     """Test cases for the default authorization binding defined in the extension
     for datasets
     """
 
     def setup(self):
-
-        super(TestDatasetAuthBinding, self).setup()
-
         self.org_admin = factories.User()
         self.org_member = factories.User()
         self.org = factories.Organization(
@@ -84,15 +83,13 @@ class TestDatasetAuthBinding(helpers.FunctionalTestBase):
         assert granted == {'create', 'list'}
 
 
-class TestResourceAuthBinding(helpers.FunctionalTestBase):
+@pytest.mark.usefixtures('clean_db', 'with_plugins')
+class TestResourceAuthBinding(object):
     """Test cases for the default authorization binding defined in the extension
     for resources
     """
 
     def setup(self):
-
-        super(TestResourceAuthBinding, self).setup()
-
         self.org_admin = factories.User()
         self.org_member = factories.User()
         self.org = factories.Organization(
@@ -176,15 +173,12 @@ class TestResourceAuthBinding(helpers.FunctionalTestBase):
         assert granted == set()
 
 
-class TestOrganizationAuthBinding(helpers.FunctionalTestBase):
+@pytest.mark.usefixtures('clean_db', 'with_plugins')
+class TestOrganizationAuthBinding():
     """Test cases for the default authorization binding defined in the extension
     for resources
     """
-
     def setup(self):
-
-        super(TestOrganizationAuthBinding, self).setup()
-
         self.org_admin = factories.User()
         self.org_member = factories.User()
         self.org = factories.Organization(

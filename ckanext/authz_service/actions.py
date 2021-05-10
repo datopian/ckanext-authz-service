@@ -31,8 +31,7 @@ def authorize(authorizer, context, data_dict):
     expires = datetime.now(tz=pytz.utc) + timedelta(seconds=lifetime)
 
     try:
-        granted_scopes = map(str, filter(None, (authorizer.authorize_scope(s, context=context)
-                                                for s in requested_scopes)))
+        granted_scopes = filter(None, (authorizer.authorize_scope(s, context=context) for s in requested_scopes))
     except UnknownEntityType as e:
         raise toolkit.ValidationError(str(e))
 
@@ -41,7 +40,7 @@ def authorize(authorizer, context, data_dict):
             "token": _create_token(user, granted_scopes, expires),
             "expires_at": expires.isoformat(),
             "requested_scopes": [str(s) for s in requested_scopes],
-            "granted_scopes": granted_scopes}
+            "granted_scopes": [str(s) for s in granted_scopes]}
 
 
 @toolkit.side_effect_free
@@ -149,4 +148,4 @@ def _generate_jti(length=8):
     # type: (int) -> bytes
     """Generate a unique token ID
     """
-    return b''.join(random.choice(string.printable) for _ in range(length))
+    return ''.join(random.choice(string.printable) for _ in range(length))
