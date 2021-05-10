@@ -3,12 +3,12 @@
 This is mainly for testing blueprints
 """
 import pytest
-
 from ckan.plugins import toolkit
 from ckan.tests import helpers
 
 from . import temporary_file
 from .test_actions import RSA_PUB_KEY
+
 
 @pytest.mark.skipif(
     toolkit.check_ckan_version(min_version='2.9'),

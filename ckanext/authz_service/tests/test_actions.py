@@ -23,6 +23,7 @@ RSA_PUB_KEY = bytes(
     "-----END PUBLIC KEY-----"
 )
 
+
 @pytest.mark.usefixtures('clean_db', 'with_plugins')
 class TestAuthorizeAction():
     """Test cases for the default authorization binding defined in the extension
