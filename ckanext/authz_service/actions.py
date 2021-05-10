@@ -136,13 +136,16 @@ def _get_private_key():
     # type: () -> Optional[bytes]
     """Get the configured private key from file or string
     """
-    private_key = util.get_config('jwt_private_key', None).encode('ascii')
-    if not private_key:
-        private_key_file = util.get_config('jwt_private_key_file')
-        if private_key_file:
-            with open(private_key_file, 'rb') as f:
-                private_key = f.read()
-    return private_key
+    private_key = util.get_config('jwt_private_key', None)
+    if private_key:
+        return private_key.encode('ascii')
+
+    private_key_file = util.get_config('jwt_private_key_file')
+    if private_key_file:
+        with open(private_key_file, 'rb') as f:
+            return f.read()
+
+    return None
 
 
 def _generate_jti(length=8):
