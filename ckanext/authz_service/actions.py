@@ -31,7 +31,8 @@ def authorize(authorizer, context, data_dict):
     expires = datetime.now(tz=pytz.utc) + timedelta(seconds=lifetime)
 
     try:
-        granted_scopes = [str(scope) for scope in filter(None, (authorizer.authorize_scope(s) for s in requested_scopes))]
+        granted_scopes = [str(scope) for scope
+                          in filter(None, (authorizer.authorize_scope(s, context=context) for s in requested_scopes))]
     except UnknownEntityType as e:
         raise toolkit.ValidationError(str(e))
 
@@ -120,28 +121,31 @@ def _create_token(user, scopes, expires):
 
 
 def _get_public_key():
-    # type: () -> Optional[str]
+    # type: () -> Optional[bytes]
     """Get the configured public key from file
     """
     pub_key_file = util.get_config('jwt_public_key_file', None)
     if pub_key_file is None:
         return None
 
-    with open(pub_key_file, 'r') as f:
-        return bytes(f.read())
+    with open(pub_key_file, 'rb') as f:
+        return f.read()
 
 
 def _get_private_key():
-    # type: () -> Optional[str]
+    # type: () -> Optional[bytes]
     """Get the configured private key from file or string
     """
     private_key = util.get_config('jwt_private_key', None)
-    if not private_key:
-        private_key_file = util.get_config('jwt_private_key_file')
-        if private_key_file:
-            with open(private_key_file, 'r') as f:
-                private_key = f.read()
-    return private_key
+    if private_key:
+        return private_key.encode('ascii')
+
+    private_key_file = util.get_config('jwt_private_key_file')
+    if private_key_file:
+        with open(private_key_file, 'rb') as f:
+            return f.read()
+
+    return None
 
 
 def _generate_jti(length=8):

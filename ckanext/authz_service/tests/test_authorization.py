@@ -1,11 +1,11 @@
 import pytest
-
 from ckan.tests import factories, helpers
 
 from ckanext.authz_service.authzzie import Scope
 from ckanext.authz_service.plugin import init_authorizer
 
 from . import ANONYMOUS_USER, user_context
+
 
 @pytest.mark.usefixtures('clean_db', 'with_plugins')
 class TestDatasetAuthBinding(object):

@@ -76,4 +76,4 @@ jobs:
         pip install -r requirements.py2.txt
         paster --plugin=ckan db init -c test.ini
     - name: Run tests
-      run: pytest --ckan-ini=test.ini --cov=ckanext.autz_service --disable-warnings ckanext/authz_service/tests
+      run: pytest --ckan-ini=test.ini --cov=ckanext.authz_service --disable-warnings ckanext/authz_service/tests
