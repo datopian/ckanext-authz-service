@@ -2,7 +2,7 @@ from contextlib import contextmanager
 from typing import Any, Dict, Optional
 
 from ckan import model
-from mock import patch
+from unittest.mock import patch
 
 ANONYMOUS_USER = None
 
