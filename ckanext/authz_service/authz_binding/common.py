@@ -4,7 +4,6 @@ from ckan import model
 from ckan.authz import is_sysadmin, users_role_for_group_or_org
 from ckan.common import g
 from ckan.plugins import toolkit
-from six import iteritems
 
 OptionalCkanContext = Optional[Dict[str, Any]]
 
@@ -20,7 +19,7 @@ def check_entity_permissions(permission_checks, data_dict=None, context=None):
     # type: (Dict[str, Optional[str]], Optional[Dict[str, Any]], OptionalCkanContext) -> Set[str]
     """Check a list of CKAN permissions and return granted actions
     """
-    granted = (p for p, check in iteritems(permission_checks)
+    granted = (p for p, check in permission_checks.items()
                if check and ckan_auth_check(check, data_dict, context=context))
     return set(granted)
 

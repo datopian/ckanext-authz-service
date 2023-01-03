@@ -12,7 +12,6 @@ import copy
 from collections import Iterable, defaultdict
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 
-from six import iteritems, string_types
 from typing_extensions import Protocol
 
 
@@ -272,7 +271,7 @@ class Authzzie(object):
         granted = check_results[0].intersection(*check_results[1:])
 
         # Translate original actions back to aliases if an alias was requested
-        granted.update(alias for action, alias in iteritems(action_map) if action in granted)
+        granted.update(alias for action, alias in action_map.items() if action in granted)
 
         return granted
 
@@ -358,6 +357,6 @@ def to_iterable(val):
     >>> next(iter(i))
     1
     """
-    if isinstance(val, Iterable) and not isinstance(val, string_types):
+    if isinstance(val, Iterable) and not isinstance(val, str):
         return val
     return (val,)
