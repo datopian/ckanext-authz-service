@@ -1,6 +1,4 @@
 pyjwt[crypto]==1.7.*
 pyyaml==5.*
-six==1.14.*
-typing
 typing-extensions==4.3.0
 pytz
