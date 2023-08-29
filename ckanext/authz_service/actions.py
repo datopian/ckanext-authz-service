@@ -9,8 +9,6 @@ import jwt
 import pytz
 from ckan.model.user import User
 from ckan.plugins import toolkit
-from six import string_types
-from six.moves import range
 
 from . import util
 from .authzzie import Scope, UnknownEntityType
@@ -22,7 +20,7 @@ def authorize(authorizer, context, data_dict):
     """Request an authorization token for a list of scopes
     """
     scopes = toolkit.get_or_bust(data_dict, 'scopes')
-    if isinstance(scopes, string_types):
+    if isinstance(scopes, str):
         scopes = scopes.split(' ')
     requested_scopes = [Scope.from_string(s) for s in scopes]
 

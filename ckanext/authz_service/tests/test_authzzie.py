@@ -1,7 +1,6 @@
 """Tests for the Authzzie permission mapping library
 """
 import pytest
-from six import iteritems
 
 from ckanext.authz_service import authzzie
 
@@ -24,7 +23,7 @@ def test_scope_parsing(scope_str, expected):
     """Test scope string parsing works as expected
     """
     scope = authzzie.Scope.from_string(scope_str)
-    for k, v in iteritems(expected):
+    for k, v in expected.items():
         assert getattr(scope, k) == v
 
 
