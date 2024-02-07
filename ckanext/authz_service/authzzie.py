@@ -9,7 +9,12 @@ system is granted permission X, and if so grant them permission Y in a
 different system.
 """
 import copy
-from collections import Iterable, defaultdict
+from collections import defaultdict
+
+try:
+    from collections.abc import Iterable  # Python 3.3 and later
+except ImportError:
+    from collections import Iterable  # Python 2.6 - 3.2
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 
 from typing_extensions import Protocol
