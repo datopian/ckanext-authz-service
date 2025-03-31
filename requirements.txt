@@ -4,17 +4,17 @@
 #
 #    pip-compile --output-file=requirements.txt requirements.in
 #
-cffi
+cffi==1.17.1
     # via cryptography
-cryptography
     # via pyjwt
-pycparser
+pycparser==2.22
     # via cffi
-pyjwt[crypto]
+pyjwt[crypto]==2.8.0
     # via -r requirements.in
-pytz
+pytz==2024.1
     # via -r requirements.in
-pyyaml
+pyyaml==6.0.1
     # via -r requirements.in
-typing-extensions
+typing-extensions==4.12.2
     # via -r requirements.in
+cryptography==44.0.2
