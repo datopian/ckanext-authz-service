@@ -100,9 +100,9 @@ def _create_token(user, scopes, expires):
 
     payload = {"exp": expires,
                "nbf": datetime.now(tz=pytz.utc),
-               "sub": user.name if user else None,
+               "sub": user.name if user and not user.is_anonymous else None,
                "iss": issuer,
-               "name": user.fullname if user else None,
+               "name": user.fullname if user and not user.is_anonymous else None,
                "scopes": ' '.join(scopes)}
 
     audience = util.get_config('jwt_audience')
