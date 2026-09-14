@@ -100,9 +100,9 @@ def _create_token(user, scopes, expires):
 
     payload = {"exp": expires,
                "nbf": datetime.now(tz=pytz.utc),
-               "sub": user.name if user else None,
+               "sub": user.name if user and not user.is_anonymous else None,
                "iss": issuer,
-               "name": user.fullname if user else None,
+               "name": user.fullname if user and not user.is_anonymous else None,
                "scopes": ' '.join(scopes)}
 
     audience = util.get_config('jwt_audience')
@@ -122,9 +122,11 @@ def _get_public_key():
     # type: () -> Optional[bytes]
     """Get the configured public key from file
     """
+
     pub_key_file = util.get_config('jwt_public_key_file', None)
     if pub_key_file is None:
         return None
+    print(pub_key_file)
 
     with open(pub_key_file, 'rb') as f:
         return f.read()
